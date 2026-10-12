@@ -1,0 +1,14 @@
+numpy
+pandas>=2.1
+pyyaml
+pyarrow
+requests
+yfinance
+scipy
+scikit-learn
+lightgbm
+matplotlib
+seaborn
+pytest
+# LSTM: tensorflow is preinstalled on Colab; install it locally only if you train the LSTM there
+# tensorflow

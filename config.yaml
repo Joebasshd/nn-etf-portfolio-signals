@@ -1,0 +1,105 @@
+# Every design choice in one place. Change a value here, not in the code,
+# and record the reason in claude/design-decisions.md (quality gate 3).
+# Values marked "not in design-decisions.md" come from the exploration
+# notebook and still need to be agreed and logged there.
+
+seed: 42
+
+universe:
+  benchmark: SPY
+  tradable: [XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY, QQQ, IWM]
+
+data:
+  start: "2000-01-01"
+  end: "2026-06-30"
+  raw_dir: data/raw
+  processed_dir: data/processed
+  # FRED id -> column name used in the pipeline
+  fred_series:
+    DTB3: DTB3            # 3-month T-bill, % p.a.
+    VIXCLS: VIX           # CBOE VIX close
+    T10Y3M: TERM_SPREAD   # 10Y minus 3M yield spread
+  fred_lag_days: 1        # macro values known at t are those published for t-1
+
+features:
+  # Each ETF enters once its longest indicator (252 days) has a value,
+  # which puts IWM's first row in May 2001.
+  sample_start: "2001-01-01"
+  sma_windows: [10, 20, 50, 200]
+  macd: {fast: 12, slow: 26, signal: 9}
+  adx_window: 14
+  return_windows: [5, 21, 63, 126, 252]
+  rsi_window: 14
+  stochastic: {k: 14, d: 3}
+  williams_window: 14
+  roc_window: 10
+  realized_vol_windows: [21, 63]
+  atr_window: 14
+  bollinger: {window: 20, n_std: 2}
+  obv_change_window: 20
+  volume_z_window: 20
+  cmf_window: 20
+  mfi_window: 14
+  vix_change_window: 5
+  benchmark_return_window: 21
+
+label:
+  horizon_days: 5         # holding period in trading days
+  execution_lag_days: 1   # decide at close t, trade at close t+1
+  decision_frequency: weekly   # last trading day of each week
+
+splits:
+  first_test_year: 2008
+  last_test_year: 2026
+  validation_months: 12   # last 12 months of each training window
+  embargo_days: 5         # gap between blocks = execution lag + horizon + embargo = 11 days
+
+models:
+  lasso:
+    C_grid: [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0]   # not in design-decisions.md
+  lightgbm:
+    top_n_features: 15
+    max_depth: [3, 4]             # not in design-decisions.md
+    early_stopping_rounds: 50     # not in design-decisions.md
+  lstm:
+    sequence_length: 20
+    layers: 2                     # not in design-decisions.md
+    dropout: 0.2                  # not in design-decisions.md
+    recurrent_dropout: 0.2        # not in design-decisions.md
+
+signals:
+  # Main: s = min(1, max(0, (p - b) / (p90 - b)))
+  #   b   = share of positive labels in the training window
+  #   p90 = this quantile of the model's validation forecasts
+  main: scaled
+  p90_quantile: 0.90
+  floor: 0.01             # stay flat for the whole window if p90 - b < floor
+  sensitivity:
+    - base_rate_centred   # (p - b) / (1 - b)
+    - linear              # 2p - 1
+
+portfolio:
+  vol_target: 0.10
+  vol_lookback_days: 63
+  max_weight: 0.25
+  max_leverage: 1.0
+  long_only: true
+  no_trade_band: 0.02
+  cost_bps_per_side: 5
+  cost_bps_sensitivity: [0, 2, 5, 10]
+  cash_rate: DTB3
+  benchmarks:
+    - spy_buy_hold
+    - equal_weight_monthly
+    - vol_target_spy
+    - sma_50_200
+    - always_on
+
+stats:
+  bootstrap: {method: stationary, n_resamples: 10000, block_days: 20}
+  # Listed in claude/architecture.md for the draft stage; not in design-decisions.md
+  other_tests: [ledoit_wolf_2008, deflated_sharpe, diebold_mariano]
+
+run:
+  quick_mode: false       # true: synthetic prices, short sample, small grids
+  results_dir: results

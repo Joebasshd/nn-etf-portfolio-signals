@@ -1,0 +1,23 @@
+# Cached data: rebuilt by src/data.py
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS and editor
+.DS_Store
+.vscode/
+
+# Local Claude Code settings (shared skills in .claude/skills/ are tracked)
+.claude/settings.local.json
+
+#Claude File
+CLAUDE.md
+
