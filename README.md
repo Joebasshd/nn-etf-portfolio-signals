@@ -4,8 +4,8 @@ Neural Network-Driven Signal Generation for Systematic Portfolio Construction: A
 
 MScFE 690 Capstone (Research Track). Team: see [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
-<!-- Replace OWNER/REPO once the repository is on GitHub -->
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OWNER/REPO/blob/main/notebooks/01_full_pipeline.ipynb)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Joebasshd/nn-etf-portfolio-signals/blob/main/notebooks/01_full_pipeline.ipynb)
 
 ## What this does
 
