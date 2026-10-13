@@ -51,7 +51,7 @@ On Colab, open the notebook with the badge above; its first cell clones the repo
 
 ## Before every merge
 
-1. `pytest tests` passes.
+1. `pytest tests` passes
 2. Any new parameter is in `config.yaml` and `docs/design-decisions.md`, not hard-coded.
 3. A change to methodology updates the notebook, the report and `design-decisions.md` together.
 4. Runs use the fixed seed in `config.yaml`.
