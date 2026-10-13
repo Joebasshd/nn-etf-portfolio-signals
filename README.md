@@ -4,7 +4,6 @@ Neural Network-Driven Signal Generation for Systematic Portfolio Construction: A
 
 MScFE 690 Capstone (Research Track). Team: see [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
-
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Joebasshd/nn-etf-portfolio-signals/blob/main/notebooks/01_full_pipeline.ipynb)
 
 ## What this does
@@ -33,7 +32,7 @@ On Colab, open the notebook with the badge above; its first cell clones the repo
 ## Layout
 
 | Path | Contents | Status |
-|---|---|---|
+| --- | --- | --- |
 | `config.yaml` | Every design choice in one place | In use |
 | `src/data.py` | Yahoo and FRED download, cache, synthetic prices | Done |
 | `src/features.py` | 31 indicators and the execution-aligned 5-day label | Done |
@@ -48,13 +47,13 @@ On Colab, open the notebook with the badge above; its first cell clones the repo
 | `data/` | Raw and processed data (git-ignored) | |
 | `results/` | Tables and figures from each run, in a folder named by date and commit | |
 | `reports/` | Proposal, draft and final report (PDF) | |
-| `claude/` | `design-decisions.md` (methodology, agreed with the supervisor) and `architecture.md` | |
+| `docs/` | `design-decisions.md` (methodology, agreed with the supervisor) and `architecture.md` | |
 
 ## Before every merge
 
 1. `pytest tests` passes.
-2. Any new parameter is in `config.yaml` and `claude/design-decisions.md`, not hard-coded.
+2. Any new parameter is in `config.yaml` and `docs/design-decisions.md`, not hard-coded.
 3. A change to methodology updates the notebook, the report and `design-decisions.md` together.
 4. Runs use the fixed seed in `config.yaml`.
 
-Methodology: [claude/design-decisions.md](claude/design-decisions.md). Team process: [claude/architecture.md](claude/architecture.md). Implementation plan, strategy steps and testing metrics: [CLAUDE.md](CLAUDE.md).
+Methodology: [docs/design-decisions.md](docs/design-decisions.md). Team process: [docs/architecture.md](docs/architecture.md).
