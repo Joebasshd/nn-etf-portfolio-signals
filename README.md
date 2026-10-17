@@ -44,6 +44,7 @@ On Colab, open the notebook with the badge above; its first cell clones the repo
 | `src/stats.py` | Block bootstrap, Ledoit–Wolf, deflated Sharpe | Interface only |
 | `tests/` | Leakage tests, label alignment, synthetic-data run | Covers the done modules |
 | `notebooks/` | `00_initial_exploration` (proposal stage), `01_full_pipeline` (thin, imports `src/`) | |
+| `notebooks/prototype/` | `capstone_signal_to_portfolio`: proposal-stage prototype of the full pipeline, tested on synthetic data; source for porting into `src/` | Reference |
 | `data/` | Raw and processed data (git-ignored) | |
 | `results/` | Tables and figures from each run, in a folder named by date and commit | |
 | `reports/` | Proposal, draft and final report (PDF) | |
