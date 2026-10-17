@@ -1,6 +1,6 @@
 # Capstone architecture framework
 
-How the team, Claude and the code fit together for the MScFE 690 capstone (Oct 2026 – final submission). Source of truth for methodology: `claude/design-decisions.md`.
+How the team, Claude and the code fit together for the MScFE 690 capstone (Oct 2026 – final submission). Source of truth for methodology: `docs/design-decisions.md`.
 
 ## The six layers
 
