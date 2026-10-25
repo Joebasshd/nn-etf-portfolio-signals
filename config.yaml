@@ -63,7 +63,8 @@ models:
     early_stopping_rounds: 50     # not in design-decisions.md
   lstm:
     sequence_length: 20
-    layers: 2                     # not in design-decisions.md
+    layers: 1                     # as in the proposal; not in design-decisions.md
+    units: 32                     # as in the proposal; not in design-decisions.md
     dropout: 0.2                  # not in design-decisions.md
     recurrent_dropout: 0.2        # not in design-decisions.md
 

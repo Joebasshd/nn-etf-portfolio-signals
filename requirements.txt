@@ -4,6 +4,7 @@ pyyaml
 pyarrow
 requests
 yfinance
+pandas-datareader
 scipy
 scikit-learn
 lightgbm
