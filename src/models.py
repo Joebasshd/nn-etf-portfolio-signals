@@ -8,7 +8,8 @@ Two stages in every window:
                LightGBM  top 15 features by importance
   forecasting  LASSO, LightGBM and LSTM are all fitted on the union of the
                two selections (the LSTM as 20-day sequences); the selection
-               fits never forecast
+               fits never forecast; LASSO's forecasting fit is L2 (ridge)
+               logistic so it keeps every union feature
 
 Rules for whoever fills this in:
   - scaling, feature selection and tuning are redone inside every window,
