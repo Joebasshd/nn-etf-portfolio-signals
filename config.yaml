@@ -58,11 +58,15 @@ models:
   # DRAFT (design-decisions.md, "decisions before Step 3"): values from the prototype
   refit_on: train               # final model fitted on training block only; validation for tuning, early stopping, p90
   calibration: analysis_only    # Brier score and calibration table; raw probabilities drive the signal
+  # Supervisor, Oct 2026: LASSO and LightGBM selection fits pick features;
+  # all three forecasting models are fitted on the union of the two selections.
+  forecast_inputs: union
   lasso:
-    C_grid: [0.002, 0.005, 0.01, 0.05, 0.1]
+    C_grid: [0.002, 0.005, 0.01, 0.05, 0.1]   # selection fit and forecasting fit (re-tuned on the union)
     selection_metric: log_loss  # on validation
+    forecast_penalty: l1        # DRAFT, to confirm: l1 (may zero union features) or l2 (keeps all)
   lightgbm:
-    top_n_features: 15
+    top_n_features: 15          # selection fit only; forecasting fit uses the union
     importance: gain
     params:                     # fixed, no grid
       n_estimators: 2000

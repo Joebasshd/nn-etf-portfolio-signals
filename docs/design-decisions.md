@@ -15,7 +15,8 @@ Running log of methodology choices confirmed with the supervisor. Update when a 
 - Scaling, feature selection and tuning redone inside every window.
 
 ## Models
-- LASSO (L1 logistic), LightGBM (top 15 features), LSTM (union of both selections, 20-day sequences).
+- Two stages in every window (supervisor, Oct 2026). Selection: LASSO (L1 logistic) keeps its non-zero coefficients; LightGBM keeps its top 15 features by importance. Forecasting: all three models (LASSO, LightGBM, LSTM) are fitted on the union of the two selections, so they share the same inputs. The selection fits never forecast.
+- LSTM inputs are the union as 20-day sequences.
 - H4 framed as a null: LSTM does not significantly outperform LASSO/GBM net of costs (approved).
 
 ## Portfolio
@@ -39,8 +40,11 @@ Drafted Oct 2026 from the defaults in `docs/bridge-plan.md` and the prototype (`
 
 ### Models
 - Final model is fitted on the training block only, not refitted on train + validation. Validation is used for tuning, early stopping and `p90`, so `p90` stays out-of-sample.
-- LASSO: L1 logistic regression (liblinear), `C` in {0.002, 0.005, 0.01, 0.05, 0.1}, chosen by validation log loss. A `C` that zeroes every coefficient is skipped; if all do, the weakest penalty ×10 is used.
-- LightGBM: fixed settings, no grid: learning rate 0.02, 15 leaves, min 200 rows per leaf, row and column subsampling 0.8, L2 penalty 1.0, up to 2,000 trees with early stopping after 100 rounds on validation log loss. Rank by gain importance, keep the top 15, refit on those.
+- LASSO selection fit: L1 logistic regression (liblinear) on all 31 features, `C` in {0.002, 0.005, 0.01, 0.05, 0.1}, chosen by validation log loss. A `C` that zeroes every coefficient is skipped; if all do, the weakest penalty ×10 is used.
+- LASSO forecasting fit: L1 logistic regression on the union, `C` re-tuned on validation over the same grid. *To confirm with Prof Blanco: the L1 penalty can zero some union features again; the alternative is an L2 (ridge) logistic fit that keeps every union feature.*
+- LightGBM fixed settings, no grid, used for both fits: learning rate 0.02, 15 leaves, min 200 rows per leaf, row and column subsampling 0.8, L2 penalty 1.0, up to 2,000 trees with early stopping after 100 rounds on validation log loss.
+- LightGBM selection fit on all 31 features; rank by gain importance and keep the top 15. Forecasting fit on the union.
+- `b` and `p90` come from the forecasting fits: `p90` is the 90th percentile of each forecasting model's validation forecasts.
 - LSTM: 1 layer, 32 units, dropout 0.2 after the LSTM layer (no recurrent dropout), 20-day sequences, Adam (learning rate 0.001), batch 512, up to 25 epochs, early stopping after 3 epochs without improvement in validation loss, best weights restored.
 - Calibration (Platt or isotonic) is analysis only: Brier score and calibration table. Raw probabilities drive the signal.
 

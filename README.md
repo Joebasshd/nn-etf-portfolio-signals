@@ -37,7 +37,7 @@ On Colab, open the notebook with the badge above; its first cell clones the repo
 | `src/data.py` | Yahoo and FRED download, cache, synthetic prices | Done |
 | `src/features.py` | 31 indicators and the execution-aligned 5-day label | Done |
 | `src/splits.py` | Expanding walk-forward with an 11-day gap between blocks | Done |
-| `src/models.py` | LASSO, LightGBM (top 15 features), LSTM (20-day sequences); in-window selection | Interface only |
+| `src/models.py` | In-window selection by LASSO and LightGBM (top 15); all three models (LASSO, LightGBM, LSTM with 20-day sequences) forecast from the union | Interface only |
 | `src/signals.py` | Main signal with floor rule; two sensitivity versions | Interface only |
 | `src/portfolio.py` | Vol-scaled weights, benchmarks, cost-aware backtest | Interface only |
 | `src/evaluate.py` | Prediction and portfolio metrics, indicator stability | Interface only |
