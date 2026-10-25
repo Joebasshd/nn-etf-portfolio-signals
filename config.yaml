@@ -1,5 +1,5 @@
 # Every design choice in one place. Change a value here, not in the code,
-# and record the reason in claude/design-decisions.md (quality gate 3).
+# and record the reason in docs/design-decisions.md (quality gate 3).
 # Values marked "not in design-decisions.md" come from the exploration
 # notebook and still need to be agreed and logged there.
 
@@ -97,7 +97,7 @@ portfolio:
 
 stats:
   bootstrap: {method: stationary, n_resamples: 10000, block_days: 20}
-  # Listed in claude/architecture.md for the draft stage; not in design-decisions.md
+  # Listed in docs/architecture.md for the draft stage; not in design-decisions.md
   other_tests: [ledoit_wolf_2008, deflated_sharpe, diebold_mariano]
 
 run:
