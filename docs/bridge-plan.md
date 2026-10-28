@@ -93,8 +93,8 @@ select, and all three forecasting models are fitted on the union of the two
 selections (see docs/design-decisions.md, Models).
 Add the Phase 1 tests from CLAUDE.md, including: changing test-year data leaves
 the scaler, selected features, b and p90 unchanged; LightGBM selects exactly
-15; all three forecasting models take exactly the union as inputs. Quick mode
-must finish in about a minute.
+15; all three models' forecasting inputs equal the union; ridge keeps every
+union feature (no zero coefficients). Quick mode must finish in about a minute.
 Plan first and wait for my approval.
 ```
 
