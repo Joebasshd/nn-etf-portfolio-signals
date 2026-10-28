@@ -3,9 +3,13 @@
 Not implemented yet. The interface below is what the rest of the pipeline
 expects; settings come from the `models` section of config.yaml.
 
-  LASSO     L1 logistic regression; selected features = non-zero coefficients
-  LightGBM  top 15 features by importance
-  LSTM      union of the LASSO and LightGBM selections, 20-day sequences
+Two stages in every window:
+  selection    LASSO     L1 logistic regression; selected = non-zero coefficients
+               LightGBM  top 15 features by importance
+  forecasting  LASSO, LightGBM and LSTM are all fitted on the union of the
+               two selections (the LSTM as 20-day sequences); the selection
+               fits never forecast; LASSO's forecasting fit is L2 (ridge)
+               logistic so it keeps every union feature
 
 Rules for whoever fills this in:
   - scaling, feature selection and tuning are redone inside every window,
@@ -24,15 +28,15 @@ MODEL_NAMES = ["lasso", "lightgbm", "lstm"]
 
 
 def select_features(train: pd.DataFrame, validation: pd.DataFrame, cfg: dict) -> dict:
-    """Features kept by LASSO, by LightGBM (top 15) and their union for the LSTM."""
+    """Features kept by the LASSO and LightGBM selection fits (top 15), and their union, the forecasting inputs."""
     raise NotImplementedError
 
 
 def fit_predict(name: str, train: pd.DataFrame, validation: pd.DataFrame, test: pd.DataFrame, cfg: dict) -> dict:
-    """Fit one model for one window.
+    """Fit one forecasting model for one window on the union of the selections.
 
     Returns a dict with: test probabilities (indexed like test), validation
-    probabilities, the selected features, b and p90.
+    probabilities, the input features, b and p90.
     """
     raise NotImplementedError
 

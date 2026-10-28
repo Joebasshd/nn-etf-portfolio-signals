@@ -55,17 +55,39 @@ splits:
   embargo_days: 5         # gap between blocks = execution lag + horizon + embargo = 11 days
 
 models:
+  # DRAFT (design-decisions.md, "decisions before Step 3"): values from the prototype
+  refit_on: train               # final model fitted on training block only; validation for tuning, early stopping, p90
+  calibration: analysis_only    # Brier score and calibration table; raw probabilities drive the signal
+  # Supervisor, Oct 2026: LASSO and LightGBM selection fits pick features;
+  # all three forecasting models are fitted on the union of the two selections.
+  forecast_inputs: union
   lasso:
-    C_grid: [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0]   # not in design-decisions.md
+    C_grid: [0.002, 0.005, 0.01, 0.05, 0.1]   # selection fit and forecasting fit (re-tuned on the union)
+    selection_metric: log_loss  # on validation
+    forecast_penalty: l2        # supervisor, Oct 2026: ridge on the union keeps every union feature
   lightgbm:
-    top_n_features: 15
-    max_depth: [3, 4]             # not in design-decisions.md
-    early_stopping_rounds: 50     # not in design-decisions.md
+    top_n_features: 15          # selection fit only; forecasting fit uses the union
+    importance: gain
+    params:                     # fixed, no grid
+      n_estimators: 2000
+      learning_rate: 0.02
+      num_leaves: 15
+      min_child_samples: 200
+      subsample: 0.8
+      subsample_freq: 1
+      colsample_bytree: 0.8
+      reg_lambda: 1.0
+    early_stopping_rounds: 100
   lstm:
     sequence_length: 20
-    layers: 2                     # not in design-decisions.md
-    dropout: 0.2                  # not in design-decisions.md
-    recurrent_dropout: 0.2        # not in design-decisions.md
+    layers: 1
+    units: 32
+    dropout: 0.2                # after the LSTM layer
+    recurrent_dropout: 0.0
+    learning_rate: 0.001
+    batch_size: 512
+    max_epochs: 25
+    early_stopping_patience: 3
 
 signals:
   # Main: s = min(1, max(0, (p - b) / (p90 - b)))
@@ -85,7 +107,9 @@ portfolio:
   max_leverage: 1.0
   long_only: true
   no_trade_band: 0.02
+  no_trade_band_applies_to: per_etf   # DRAFT
   cost_bps_per_side: 5
+  benchmarks_pay_costs: true          # DRAFT; buy-and-hold pays the initial purchase only
   cost_bps_sensitivity: [0, 2, 5, 10]
   cash_rate: DTB3
   benchmarks:
@@ -99,6 +123,17 @@ stats:
   bootstrap: {method: stationary, n_resamples: 10000, block_days: 20}
   # Listed in docs/architecture.md for the draft stage; not in design-decisions.md
   other_tests: [ledoit_wolf_2008, deflated_sharpe, diebold_mariano]
+  # DRAFT (design-decisions.md, "decisions before Step 3")
+  significance_level: 0.05
+  alternative: one_sided
+  deflated_sharpe_trials: 9     # 3 models x 3 signal versions
+
+subperiods:                     # DRAFT
+  break_2018: "2018-09-24"      # GICS reclassification / XLC launch
+  crises:
+    gfc: ["2008-09-01", "2009-06-30"]
+    covid: ["2020-02-01", "2020-06-30"]
+    rate_shock_2022: ["2022-01-01", "2022-10-31"]
 
 run:
   quick_mode: false       # true: synthetic prices, short sample, small grids
