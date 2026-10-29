@@ -65,7 +65,7 @@ models:
     C_grid: [0.002, 0.005, 0.01, 0.05, 0.1]   # L1 selection fit only
     selection_metric: log_loss  # on validation
     forecast_penalty: l2        # supervisor, Oct 2026: ridge on the union keeps every union feature
-    ridge_C_grid: [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0]   # DRAFT; widened both ways: 0.002 was the lower edge in 12 of 19 windows, 0.1 the upper edge in 3
+    ridge_C_grid: [0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]   # DRAFT; widened twice: 0.0001 was still the lower edge in 11 of 19 windows (ridge-widegrid run), 1.0 the upper edge in 2
   lightgbm:
     top_n_features: 15          # selection fit only; forecasting fit uses the union
     importance: gain

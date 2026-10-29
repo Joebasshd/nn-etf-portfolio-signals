@@ -45,7 +45,7 @@ Two stages in every window:
 ## DRAFT: awaiting team or supervisor confirmation
 | Topic | Draft |
 |---|---|
-| Ridge C grid | {0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0}, widened at both ends (0.002 was the lower edge in 12 of 19 windows, 0.1 the upper edge in 3); fix after the rerun, and check the chosen C no longer sits on an edge |
+| Ridge C grid | {0.00001, 0.00003, 0.0001, …, 1.0, 3.0, 10.0} (half-decade steps). Widened twice: first because 0.002 was the lower edge in 12 of 19 windows and 0.1 the upper edge in 3; then because the `ridge-widegrid` run still chose 0.0001 (the lower edge) in 11 windows and 1.0 in 2. If the strongest penalty still wins, report that the linear model finds no usable signal rather than widening again |
 | LASSO selection grid | L1 logistic (liblinear), C in {0.002, 0.005, 0.01, 0.05, 0.1}, chosen by validation log loss; a C that zeroes every coefficient is skipped, and if all do, the weakest penalty ×10 is used |
 | Final fit | Training block only; validation is for tuning, early stopping and p90 |
 | `b` and `p90` | Taken from the forecasting fits: `p90` is the 90th percentile of each forecasting model's validation forecasts |
