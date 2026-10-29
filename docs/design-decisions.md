@@ -50,7 +50,7 @@ Two stages in every window:
 | Final fit | Training block only; validation is for tuning, early stopping and p90 |
 | `b` and `p90` | Taken from the forecasting fits: `p90` is the 90th percentile of each forecasting model's validation forecasts |
 | LightGBM settings | Fixed, same for the selection and forecasting fits: num_leaves 15, learning rate 0.02, min_child_samples 200, subsample 0.8 (every round), colsample 0.8, lambda 1.0; up to 2,000 trees with early stopping after 100 rounds on validation log loss |
-| LSTM training | Dropout 0.2 after the LSTM layer, no recurrent dropout; Adam 0.001, batch 512, up to 25 epochs, early stopping with patience 3, best weights restored; several seeds (median and range) — number of seeds to confirm with the supervisor |
+| LSTM training | Dropout 0.2 after the LSTM layer, no recurrent dropout; Adam 0.001, batch 512, up to 25 epochs, early stopping with patience 3, best weights restored; 5 seeds (42–46), reported as median and range, with the placebo and bootstrap repeated for every seed; a single-seed result is not a headline — number of seeds to confirm with the supervisor |
 | Calibration | Analysis only (Brier score, calibration table), not used for position sizing |
 | No-trade band | Per ETF weight: an ETF trades only if its target differs from its current weight by at least 2 points |
 | Benchmark costs | Same cost through the same backtest; buy-and-hold pays only the first purchase; the other benchmarks use the same no-trade band |

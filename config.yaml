@@ -89,6 +89,7 @@ models:
     batch_size: 512
     max_epochs: 25
     early_stopping_patience: 3
+    seeds: [42, 43, 44, 45, 46]  # DRAFT; first = main LSTM; report median and range, placebo per seed
 
 signals:
   # Main: s = min(1, max(0, (p - b) / (p90 - b)))
