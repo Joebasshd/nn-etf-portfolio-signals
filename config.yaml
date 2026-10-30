@@ -134,7 +134,8 @@ stats:
   # Rule in design-decisions.md: 9 main specifications + seed-averaged LSTM (computed in every
   # run) + 15 earlier specifications below; LSTM seeds, placebo and sub-period runs are not counted.
   deflated_sharpe_trials: 25
-  dsr_external_trials:          # recorded Sharpe ratios of trials not computed in the current run
+  dsr_reference_trials: results/2026-10-30_363ec0b_lstm-10seeds-dsr/dsr_trials.csv   # src/ reads the 15 historical trials from here
+  dsr_external_trials:          # the same 15 historical trials, read by the prototype notebook
     # linear model, L1 refit on the union (team results note, 25 Oct 2026, separate data download)
     - {name: "L1 refit, main", sharpe: 0.30}
     - {name: "L1 refit, base-rate", sharpe: 0.74}
@@ -170,4 +171,8 @@ subperiods:                     # dates fixed before sub-period results were com
 
 run:
   quick_mode: false       # true: synthetic prices, short sample, small grids
+  quick:                  # overrides used only when quick_mode is true; the synthetic run takes about a minute
+    lstm_seeds: 2         # first two of models.lstm.seeds
+    lstm_max_epochs: 2
+    lightgbm_n_estimators: 200
   results_dir: results

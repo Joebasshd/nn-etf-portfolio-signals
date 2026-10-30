@@ -35,7 +35,7 @@ Project: "Neural Network-Driven Signal Generation for Systematic Portfolio Const
 - **Tests:**
   - Stationary block bootstrap on Sharpe differences (10,000 resamples, mean block 20 days, one-sided, 5%).
   - Exposure-matched placebo (supervisor request, Oct 2026; see below).
-  - Deflated Sharpe ratio with 18 trials (rule in `docs/design-decisions.md`); Ledoit-Wolf and Diebold-Mariano as complements. Significance 5%, one-sided.
+  - Deflated Sharpe ratio with 25 trials (rule in `docs/design-decisions.md`; the 15 historical trials are read from the frozen `results/2026-10-30_363ec0b_lstm-10seeds-dsr/dsr_trials.csv`); Ledoit-Wolf and Diebold-Mariano as complements. Significance 5%, one-sided.
 - **Stability reporting:** selection frequency per indicator, average Jaccard overlap between consecutive windows, share of selections by family.
 
 ## Exposure-matched placebo test

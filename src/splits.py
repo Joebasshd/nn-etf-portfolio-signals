@@ -1,8 +1,8 @@
 """Expanding walk-forward splits with an 11-day gap between blocks.
 
-For each test year the validation block is the last validation_months of the
-training window and the training block is everything earlier. The model is
-refitted once a year.
+For each test year the validation block is the validation_months ending one
+gap before the test year, and the training block is everything up to one gap
+before validation. The model is refitted once a year.
 
 The gap between train, validation and test is
     execution_lag_days + horizon_days + embargo_days  (1 + 5 + 5 = 11)
@@ -45,15 +45,17 @@ def walk_forward_splits(calendar: pd.DatetimeIndex, cfg: dict) -> list:
 
     splits = []
     for year in range(sc["first_test_year"], sc["last_test_year"] + 1):
-        test_start = pd.Timestamp(year=year, month=1, day=1)
-        val_start = test_start - pd.DateOffset(months=sc["validation_months"])
         test = calendar[calendar.year == year]
-        validation = calendar[(calendar >= val_start) & (calendar < test_start)]
-        train = calendar[calendar < val_start]
-        if len(test) == 0 or len(validation) == 0 or len(train) == 0:
+        if len(test) == 0:
             continue
-        train = _cut_before(train, calendar, validation[0], gap)
-        validation = _cut_before(validation, calendar, test[0], gap)
+        before_test = _cut_before(calendar, calendar, test[0], gap)
+        if len(before_test) == 0:
+            continue
+        val_start = before_test[-1] - pd.DateOffset(months=sc["validation_months"])
+        validation = before_test[before_test > val_start]
+        train = _cut_before(calendar, calendar, validation[0], gap)
+        if len(train) == 0:
+            continue
         splits.append(Split(year, train, validation, test))
     return splits
 
