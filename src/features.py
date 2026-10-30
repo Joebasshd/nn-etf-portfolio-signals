@@ -11,7 +11,6 @@ import pandas as pd
 
 TRADING_DAYS = 252
 
-# Column prefix -> indicator family, used for the stability measures.
 FAMILIES = {
     "trend": "trend",
     "mom": "momentum",
@@ -86,8 +85,7 @@ def ticker_features(prices: pd.DataFrame, ticker: str, cfg: dict) -> pd.DataFram
     """The 27 price and volume indicators for one ETF."""
     fc = cfg["features"]
     px = prices["adj_close"][ticker]
-    # High and low are put on the adjusted-close scale so that ranges are not
-    # distorted by dividends and splits.
+    # Adjusted-close scale, so dividends and splits do not distort the ranges.
     adj = px / prices["close"][ticker]
     h, l = prices["high"][ticker] * adj, prices["low"][ticker] * adj
     v = prices["volume"][ticker]
@@ -95,16 +93,15 @@ def ticker_features(prices: pd.DataFrame, ticker: str, cfg: dict) -> pd.DataFram
 
     f = pd.DataFrame(index=px.index)
 
-    # Trend (8). MACD terms are divided by price to stay comparable over time.
     for w in fc["sma_windows"]:
         f[f"trend_sma{w}_ratio"] = px / px.rolling(w).mean() - 1
     macd, macd_sig, macd_hist = compute_macd(px, **fc["macd"])
+    # Divided by price so MACD levels stay comparable across decades.
     f["trend_macd_line"] = macd / px
     f["trend_macd_signal"] = macd_sig / px
     f["trend_macd_hist"] = macd_hist / px
     f["trend_adx"] = compute_adx(h, l, px, fc["adx_window"])
 
-    # Momentum (10)
     for w in fc["return_windows"]:
         f[f"mom_ret_{w}d"] = px.pct_change(w)
     f["mom_rsi"] = compute_rsi(px, fc["rsi_window"])
@@ -113,7 +110,6 @@ def ticker_features(prices: pd.DataFrame, ticker: str, cfg: dict) -> pd.DataFram
     f["mom_williams_r"] = -100 * (hh - px) / (hh - ll).replace(0, np.nan)
     f["mom_roc"] = 100 * px.pct_change(fc["roc_window"])
 
-    # Volatility (5)
     for w in fc["realized_vol_windows"]:
         f[f"vol_realized_{w}d"] = ret.rolling(w).std() * np.sqrt(TRADING_DAYS)
     f["vol_atr_norm"] = compute_atr(h, l, px, fc["atr_window"]) / px
@@ -122,7 +118,6 @@ def ticker_features(prices: pd.DataFrame, ticker: str, cfg: dict) -> pd.DataFram
     f["vol_bb_pct_b"] = (px - (mid - n_std * sd)) / (2 * n_std * sd).replace(0, np.nan)
     f["vol_bb_bandwidth"] = 2 * n_std * sd / mid
 
-    # Volume (4). The OBV change is scaled by total volume over the window.
     ow = fc["obv_change_window"]
     obv = (np.sign(ret) * v).where(ret.notna()).cumsum()
     f["volu_obv_change"] = obv.diff(ow) / v.rolling(ow).sum()

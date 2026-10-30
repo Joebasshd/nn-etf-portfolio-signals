@@ -71,10 +71,10 @@ Check every change against these. A violation is a bug even if results improve.
 - Every design choice lives in one configuration block or `config.yaml`, never hard-coded inside functions.
 - Python with pandas, NumPy, scikit-learn, LightGBM, TensorFlow/Keras, matplotlib. Keep `requirements.txt` current.
 - Fixed random seed from `config.yaml`.
-- Results go to `results/<date>_<git commit>_<label>/` at the repo root (label e.g. `prototype-identical`, `ridge-widegrid`), with small CSVs at the top level, figures in `figures/`, large files (predictions, equity curves) in `large/` (git-ignored), and a `run_info.json` recording commit, settings, data source and dates. Never write to a bare `results/` folder; commit after code changes and before a run so the folder name points at the code that produced it.
+- Results go to `results/<date>_<git commit>_<label>/` at the repo root (label e.g. `prototype-identical`, `ridge-widegrid`), with small CSVs at the top level, figures in `figures/`, large files (predictions, equity curves) in `large/` (git-ignored), and a `run_info.json` recording commit, settings, data source and dates. Never write to a bare `results/` folder. Runs are made from committed code so the folder name points at the code that produced it; ask before committing.
 - The prototype notebook `notebooks/prototype/capstone_signal_to_portfolio.ipynb` is evidence: add switches rather than deleting the original design. `notebooks/01_full_pipeline.ipynb` stays thin and calls `src/`.
 - Code must run in Google Colab on a CPU runtime; keep a QUICK_MODE for fast checks.
-- Short comments that say why, not what. Docstrings on public functions.
+- Comments only for a non-obvious "why" (edge-case workarounds, mathematical invariants, library quirks), never the "what" or "how"; no section-header comments, TODO markers, author tags or commented-out code. Prefer expressive names. Concise docstrings on public functions only.
 - Follow the course source code guidelines: private repo, README, requirements.txt, CONTRIBUTORS file, clear commit messages, instructor read-only access.
 
 ## How to verify before handing back

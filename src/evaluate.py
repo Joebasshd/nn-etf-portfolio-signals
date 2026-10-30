@@ -1,19 +1,4 @@
-"""Prediction metrics, portfolio metrics and indicator stability.
-
-Not implemented yet.
-
-Prediction:  accuracy against the base rate, AUC, log loss, Brier score,
-             calibration table
-Portfolio:   annual return, volatility, Sharpe, Sortino, max drawdown,
-             turnover, average exposure, total cost, break-even cost
-Stability:   selection frequency per indicator, average Jaccard overlap
-             between consecutive windows, average share of selected
-             indicators by family (features.feature_family)
-Sub-periods: the same metrics by test year, around the 2018 break and in
-             crisis windows
-
-Each run writes its tables and figures to results/<date>_<git commit>/.
-"""
+"""Prediction metrics, portfolio metrics, indicator stability and run folders."""
 
 import pandas as pd
 
@@ -51,5 +36,5 @@ def family_share(selections: pd.DataFrame) -> pd.DataFrame:
 
 
 def results_dir(cfg: dict):
-    """Create and return results/<date>_<git commit>/ for the current run."""
+    """Create and return results/<date>_<git commit>_<label>/ for the current run."""
     raise NotImplementedError
