@@ -131,9 +131,29 @@ stats:
   significance_level: 0.05
   alternative: one_sided
   h4_correction: holm           # across LSTM vs linear and LSTM vs LightGBM
-  # 9 main specifications + the linear model's L1 refit and two earlier ridge grids (3 signals
-  # each); LSTM seeds, placebo and sub-period runs are not counted (design-decisions.md).
-  deflated_sharpe_trials: 18
+  # Rule in design-decisions.md: 9 main specifications + seed-averaged LSTM (computed in every
+  # run) + 15 earlier specifications below; LSTM seeds, placebo and sub-period runs are not counted.
+  deflated_sharpe_trials: 25
+  dsr_external_trials:          # recorded Sharpe ratios of trials not computed in the current run
+    # linear model, L1 refit on the union (team results note, 25 Oct 2026, separate data download)
+    - {name: "L1 refit, main", sharpe: 0.30}
+    - {name: "L1 refit, base-rate", sharpe: 0.74}
+    - {name: "L1 refit, 2p-1", sharpe: 0.51}
+    # ridge grid 0.002-0.1 (results/2026-10-26_c6e6567_prototype_union)
+    - {name: "ridge grid 0.002-0.1, main", sharpe: 0.448}
+    - {name: "ridge grid 0.002-0.1, base-rate", sharpe: 0.742}
+    - {name: "ridge grid 0.002-0.1, 2p-1", sharpe: 0.531}
+    # ridge grid 0.0001-1 (results/2026-10-28_5d9f902_ridge-widegrid)
+    - {name: "ridge grid 0.0001-1, main", sharpe: 0.445}
+    - {name: "ridge grid 0.0001-1, base-rate", sharpe: 0.661}
+    - {name: "ridge grid 0.0001-1, 2p-1", sharpe: 0.541}
+    # original input design, each model on its own selection (results/2026-10-25_5b23880_prototype, local)
+    - {name: "original design LASSO, main", sharpe: 0.296}
+    - {name: "original design LASSO, base-rate", sharpe: 0.743}
+    - {name: "original design LASSO, 2p-1", sharpe: 0.482}
+    - {name: "original design LightGBM, main", sharpe: 0.153}
+    - {name: "original design LightGBM, base-rate", sharpe: 0.430}
+    - {name: "original design LightGBM, 2p-1", sharpe: 0.593}
   placebo:                      # exposure-matched placebo (supervisor request)
     method: circular_shift
     variants: [independent, common]   # one shift per ETF; one common shift for all ETFs (supervisor)
