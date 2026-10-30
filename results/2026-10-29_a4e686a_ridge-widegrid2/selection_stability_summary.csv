@@ -1,0 +1,3 @@
+model,avg. indicators selected,avg. overlap (Jaccard),most selected family,most selected indicator
+LASSO,11.526315789473685,0.3399931581828134,Volatility,rv63 (95% of windows)
+GBM,15.0,0.6041313394506961,Momentum,vix (100% of windows)

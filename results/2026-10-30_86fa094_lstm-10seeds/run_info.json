@@ -1,0 +1,127 @@
+{
+  "label": "lstm-10seeds",
+  "commit": "86fa094",
+  "run_date": "2026-10-30 19:57",
+  "input_design": "identical",
+  "data_source": "cache",
+  "quick_mode": false,
+  "data_dates": [
+    "2000-01-03",
+    "2026-06-29"
+  ],
+  "backtest_dates": [
+    "2008-02-04",
+    "2026-06-29"
+  ],
+  "test_windows": [
+    "2008",
+    "2009",
+    "2010",
+    "2011",
+    "2012",
+    "2013",
+    "2014",
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025",
+    "2026"
+  ],
+  "seed": 42,
+  "lasso_C_grid": [
+    0.002,
+    0.005,
+    0.01,
+    0.05,
+    0.1
+  ],
+  "ridge_C_grid": [
+    1e-05,
+    3e-05,
+    0.0001,
+    0.0003,
+    0.001,
+    0.003,
+    0.01,
+    0.03,
+    0.1,
+    0.3,
+    1.0,
+    3.0,
+    10.0
+  ],
+  "top_k_gbm": 15,
+  "gbm_params": {
+    "n_estimators": 2000,
+    "learning_rate": 0.02,
+    "num_leaves": 15,
+    "min_child_samples": 200,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0,
+    "random_state": 42,
+    "verbose": -1
+  },
+  "lstm": {
+    "run": true,
+    "lookback": 20,
+    "epochs": 25,
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+    ],
+    "seed_average": true
+  },
+  "signal": {
+    "p_high": 0.9,
+    "min_edge": 0.01
+  },
+  "portfolio": {
+    "vol_target": 0.1,
+    "vol_lookback": 63,
+    "max_weight": 0.25,
+    "no_trade_band": 0.02,
+    "cost_bps": 5,
+    "cost_grid": [
+      0,
+      2,
+      5,
+      10
+    ]
+  },
+  "bootstrap": {
+    "n": 10000,
+    "block": 20,
+    "h4_correction": "holm"
+  },
+  "deflated_sharpe_trials": 18,
+  "placebo": {
+    "method": "circular_shift",
+    "variants": [
+      "independent",
+      "common"
+    ],
+    "n_draws": 1000,
+    "quick_draws": 100,
+    "min_shift_weeks": 52,
+    "draws_used": 1000
+  },
+  "runtime_minutes": 24.0,
+  "cpu_minutes": 32.1
+}
