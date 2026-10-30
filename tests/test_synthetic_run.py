@@ -9,7 +9,7 @@ import copy
 import pandas as pd
 import pytest
 
-from src import features, models, signals, splits
+from src import features, models, portfolio, signals, splits
 
 
 def test_data_to_splits_on_synthetic_prices(cfg, synthetic):
@@ -29,7 +29,7 @@ def test_data_to_splits_on_synthetic_prices(cfg, synthetic):
         assert splits.select(dataset, s.train)["label"].notna().all()
 
 
-def test_models_and_signals_on_synthetic_prices(cfg, synthetic):
+def test_models_signals_and_portfolio_on_synthetic_prices(cfg, synthetic):
     pytest.importorskip("tensorflow")
     quick = copy.deepcopy(cfg)
     quick["run"]["quick_mode"] = True
@@ -61,3 +61,22 @@ def test_models_and_signals_on_synthetic_prices(cfg, synthetic):
         assert s.notna().all().all()
         assert ((s >= 0) & (s <= 1)).all().all()
     assert signals.signal_edges(result.window_stats, quick).index.equals(result.window_stats.index)
+
+    market = portfolio.prepare_market(prices, macro, quick, folds[0].test[0])
+    base = portfolio.base_weights(market, quick)
+    strategies = portfolio.benchmark_targets(market, base, quick)
+    band = quick["portfolio"]["no_trade_band"]
+    for model in main.columns:
+        strategies[model] = (portfolio.target_weights(main[model], base), band)
+    for name, sensitivity_signal in zip(["base_rate", "linear"], sensitivity):
+        for model in sensitivity_signal.columns:
+            strategies[f"{model}_{name}"] = (portfolio.target_weights(sensitivity_signal[model], base), band)
+    backtests = portfolio.run_strategies(strategies, market, quick)
+
+    first = next(iter(backtests.values())).index
+    assert len(backtests) == len(quick["portfolio"]["benchmarks"]) + main.shape[1] + 2 * len(signals.main_models(quick))
+    for r in backtests.values():
+        assert r.index.equals(first)
+        assert r.notna().all().all()
+        assert (r["exposure"] >= 0).all() and (r["exposure"] <= 1 + 1e-12).all()
+    assert first[0] > folds[0].test[0] and first[-1] == prices.index[-1]
