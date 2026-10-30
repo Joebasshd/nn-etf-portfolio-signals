@@ -24,16 +24,18 @@ Project: "Neural Network-Driven Signal Generation for Systematic Portfolio Const
   1. Selection only, on all 31 features: LASSO (L1 logistic, C by validation log loss) keeps its non-zero coefficients; LightGBM (fixed settings, early stopping) keeps its top 15 by gain.
   2. Forecasting, every model on the same union of the two selections: linear model = ridge (L2) logistic regression, C re-tuned by validation log loss, keeps every union feature; LightGBM with the same fixed settings and early stopping, no further selection; LSTM (1 layer, 32 units, dropout 0.2, 20-day sequences, early stopping). The L1-refit version is a robustness check only.
   - In tables and reports, call the linear model "Linear (L1 selection, ridge on union)", not plain LASSO. Code keys may stay `lasso`; say so wherever the label could mislead.
-- **Ridge penalty grid:** C in {0.00001, 0.00003, 0.0001, ..., 1.0, 3.0, 10.0} in half-decade steps (DRAFT: widened twice; the `ridge-widegrid` run still chose the lower edge 0.0001 in 11 of 19 windows and 1.0 in 2). If the strongest penalty still wins, report that the linear model finds no usable signal rather than widening again.
+- **Ridge penalty grid (final, no further widening):** C in {0.00001, 0.00003, 0.0001, ..., 1.0, 3.0, 10.0} in half-decade steps. The strongest penalty wins in 7 of 19 windows, so the linear model is reported as finding no usable signal; its Sharpe ratio and comparisons depend on the grid and are not used for conclusions.
+- **LSTM seeds (supervisor):** 10 seeds, 42-51. Seed each fit with `keras.utils.set_random_seed` and restore the global random state afterwards (`tf.random.set_seed` alone does not fix Keras 3's starting weights). Report the median and range across seeds, plus the seed-averaged forecast (mean probability across seeds, then the usual b, p90 and floor) as a robustness check next to them, never instead of them. LSTM figures from before 29 Oct 2026 are superseded.
 - **Signal (long/flat):** s = min(1, max(0, (p - b) / (p90 - b))), b = training-window base rate, p90 = 90th percentile of VALIDATION forecasts (never the test window). If p90 - b < 0.01, stay flat for that window. Sensitivity: (p - b)/(1 - b) and 2p - 1; their Sharpe ratios are inflated by near-zero exposure and are not evidence of skill.
 - **Portfolio:** inverse-volatility base weights (63-day), scaled to 10% annual volatility, no leverage, 25% cap per ETF, cash earns T-bill. Weekly signals, executed at next day's close, 2-percentage-point no-trade band per ETF.
 - **Benchmarks:** SPY buy-and-hold; equal-weight monthly; vol-targeted SPY; SMA 50/200; Always-on (same vol-scaled weights, signals = 1). Benchmarks pay the same costs through the same backtest.
 - **Costs:** 5 bps per side base case; 0/2/5/10 sensitivity; break-even cost.
-- **Hypothesis H4 (approved wording):** a null, the LSTM does not significantly outperform LASSO or LightGBM net of costs. Do not relabel other findings as H4.
+- **Hypothesis H4 (approved wording):** a null, the LSTM does not significantly outperform LASSO or LightGBM net of costs. Test both comparisons with a Holm correction across the two, for every seed and the seed average. LSTM vs LightGBM is the substantive test; LSTM vs linear is reported but not read as LSTM skill. Do not relabel other findings as H4.
+- **Framing (supervisor):** no model adds reliable value net of costs over always-on; the LSTM has a small but consistent ranking edge; the linear model finds no usable signal.
 - **Tests:**
   - Stationary block bootstrap on Sharpe differences (10,000 resamples, mean block 20 days, one-sided, 5%).
   - Exposure-matched placebo (supervisor request, Oct 2026; see below).
-  - Planned: deflated Sharpe ratio over all versions tried, Ledoit-Wolf, Diebold-Mariano.
+  - Deflated Sharpe ratio with 18 trials (rule in `docs/design-decisions.md`); Ledoit-Wolf and Diebold-Mariano as complements. Significance 5%, one-sided.
 - **Stability reporting:** selection frequency per indicator, average Jaccard overlap between consecutive windows, share of selections by family.
 
 ## Exposure-matched placebo test
@@ -41,12 +43,12 @@ Project: "Neural Network-Driven Signal Generation for Systematic Portfolio Const
 Purpose: show whether a model's Sharpe ratio comes from timing skill or just from being out of the market in bad periods (the LSTM is invested only about 23% of the time).
 
 - Take the model's actual weekly signal matrix (decision weeks x ETFs) from the run.
-- Each draw: for every ETF independently, circularly shift its signal series by a random whole number of weeks k, uniform in [52, W - 52], where W is the number of decision weeks. This keeps each ETF's exposure, the distribution of position sizes and holding lengths (so turnover and costs stay comparable), and destroys the alignment with future returns.
+- Each draw: circularly shift the signal series by a random whole number of weeks k, uniform in [52, W - 52], where W is the number of decision weeks. Two variants, both reported: **independent** (every ETF gets its own k) and **common** (one k per draw for all ETFs, keeping the cross-ETF pattern of positions; supervisor approved). Both keep each ETF's exposure, the distribution of position sizes and holding lengths (so turnover and costs stay comparable), and destroy the alignment with future returns.
 - Push every draw through the SAME backtest: vol scaling, caps, no-trade band, 5 bps costs, T-bill cash. Never a simplified return calculation.
 - Draws: 1,000 (100 in QUICK_MODE), with a fixed seed from `config.yaml`.
-- Report per model: actual Sharpe; placebo mean, 5th and 95th percentiles; placebo p = (1 + number of draws with Sharpe >= actual) / (N + 1); and mean placebo exposure next to actual exposure as a check.
+- Report per model and variant: actual Sharpe; placebo median, 5th and 95th percentiles; placebo p = (1 + number of draws with Sharpe >= actual) / (N + 1); the placebo median maximum drawdown next to the actual one (so lower drawdowns from low exposure are not mistaken for skill); and mean placebo exposure next to actual exposure as a check.
 - Optional robustness: random permutation of weeks (keeps exposure, not holding lengths).
-- Run it for all three models; the LSTM is the focus.
+- Run it for all three models, every LSTM seed and the seed average; the LSTM is the focus.
 
 ## Non-negotiable leakage rules
 
@@ -62,7 +64,7 @@ Check every change against these. A violation is a bug even if results improve.
 
 - After every run, count how often each tuned hyperparameter lands on the edge of its grid. If it does in more than a few windows, widen the grid and rerun before reporting.
 - Do not choose a specification because it scored better on the test years. Justify choices on design grounds, and report rejected variants as robustness checks.
-- Neural-network results from one seed are provisional. Report the LSTM across several seeds (median and range) once the supervisor confirms the number.
+- Neural-network results from one seed are provisional. Report the LSTM across the 10 seeds (median and range); a single seed is never the headline.
 
 ## Coding conventions
 

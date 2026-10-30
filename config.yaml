@@ -1,7 +1,7 @@
 # Every design choice in one place. Change a value here, not in the code,
 # and record the reason in docs/design-decisions.md (quality gate 3).
-# Values marked "not in design-decisions.md" come from the exploration
-# notebook and still need to be agreed and logged there.
+# Every value here is settled in design-decisions.md (supervisor or team
+# decision, 30 Oct 2026); there are no draft settings left.
 
 seed: 42
 
@@ -55,17 +55,18 @@ splits:
   embargo_days: 5         # gap between blocks = execution lag + horizon + embargo = 11 days
 
 models:
-  # DRAFT (design-decisions.md, "decisions before Step 3"): values from the prototype
   refit_on: train               # final model fitted on training block only; validation for tuning, early stopping, p90
   calibration: analysis_only    # Brier score and calibration table; raw probabilities drive the signal
-  # Supervisor, Oct 2026: LASSO and LightGBM selection fits pick features;
+  # Supervisor: LASSO and LightGBM selection fits pick features;
   # all three forecasting models are fitted on the union of the two selections.
-  input_design: identical       # DRAFT; identical = every model forecasts from the union
+  input_design: identical       # identical = every model forecasts from the union
   lasso:
     C_grid: [0.002, 0.005, 0.01, 0.05, 0.1]   # L1 selection fit only
     selection_metric: log_loss  # on validation
     forecast_penalty: l2        # supervisor, Oct 2026: ridge on the union keeps every union feature
-    ridge_C_grid: [0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]   # DRAFT; widened twice: 0.0001 was still the lower edge in 11 of 19 windows (ridge-widegrid run), 1.0 the upper edge in 2
+    # Widened twice, as planned; final, no further widening (pre-committed). The strongest
+    # penalty still wins in 7 of 19 windows, so the linear model finds no usable signal.
+    ridge_C_grid: [0.00001, 0.00003, 0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
   lightgbm:
     top_n_features: 15          # selection fit only; forecasting fit uses the union
     importance: gain
@@ -89,7 +90,10 @@ models:
     batch_size: 512
     max_epochs: 25
     early_stopping_patience: 3
-    seeds: [42, 43, 44, 45, 46]  # DRAFT; first = main LSTM; report median and range, placebo per seed
+    # Supervisor: 10 seeds; first = main LSTM. Report median and range, plus the seed-averaged
+    # forecast as a robustness check next to them; placebo and bootstrap for every seed.
+    seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    seed_average: true
 
 signals:
   # Main: s = min(1, max(0, (p - b) / (p90 - b)))
@@ -109,9 +113,9 @@ portfolio:
   max_leverage: 1.0
   long_only: true
   no_trade_band: 0.02
-  no_trade_band_applies_to: per_etf   # DRAFT
+  no_trade_band_applies_to: per_etf
   cost_bps_per_side: 5
-  benchmarks_pay_costs: true          # DRAFT; buy-and-hold pays the initial purchase only
+  benchmarks_pay_costs: true          # buy-and-hold pays the initial purchase only
   cost_bps_sensitivity: [0, 2, 5, 10]
   cash_rate: DTB3
   benchmarks:
@@ -123,19 +127,21 @@ portfolio:
 
 stats:
   bootstrap: {method: stationary, n_resamples: 10000, block_days: 20}
-  # Listed in docs/architecture.md for the draft stage; not in design-decisions.md
   other_tests: [ledoit_wolf_2008, deflated_sharpe, diebold_mariano]
-  # DRAFT (design-decisions.md, "decisions before Step 3")
   significance_level: 0.05
   alternative: one_sided
-  deflated_sharpe_trials: 12    # DRAFT; 3 models x 3 signals + L1-refit and other checks
-  placebo:                      # DRAFT; exposure-matched placebo (supervisor request, Oct 2026)
-    method: circular_shift      # shift each ETF's weekly signal series by a random number of weeks
+  h4_correction: holm           # across LSTM vs linear and LSTM vs LightGBM
+  # 9 main specifications + the linear model's L1 refit and two earlier ridge grids (3 signals
+  # each); LSTM seeds, placebo and sub-period runs are not counted (design-decisions.md).
+  deflated_sharpe_trials: 18
+  placebo:                      # exposure-matched placebo (supervisor request)
+    method: circular_shift
+    variants: [independent, common]   # one shift per ETF; one common shift for all ETFs (supervisor)
     n_draws: 1000
     quick_draws: 100            # in quick mode
     min_shift_weeks: 52         # shift uniform in [52, W - 52], W = number of decision weeks
 
-subperiods:                     # DRAFT
+subperiods:                     # dates fixed before sub-period results were computed
   break_2018: "2018-09-24"      # GICS reclassification / XLC launch
   crises:
     gfc: ["2008-09-01", "2009-06-30"]
