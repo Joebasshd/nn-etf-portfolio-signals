@@ -9,7 +9,7 @@ import copy
 import pandas as pd
 import pytest
 
-from src import features, models, splits
+from src import features, models, signals, splits
 
 
 def test_data_to_splits_on_synthetic_prices(cfg, synthetic):
@@ -29,7 +29,7 @@ def test_data_to_splits_on_synthetic_prices(cfg, synthetic):
         assert splits.select(dataset, s.train)["label"].notna().all()
 
 
-def test_models_on_synthetic_prices(cfg, synthetic):
+def test_models_and_signals_on_synthetic_prices(cfg, synthetic):
     pytest.importorskip("tensorflow")
     quick = copy.deepcopy(cfg)
     quick["run"]["quick_mode"] = True
@@ -51,3 +51,13 @@ def test_models_on_synthetic_prices(cfg, synthetic):
     assert set(result.selections["model"]) == set(models.SELECTORS)
     edges = models.grid_edges(result.tuning, quick)
     assert (edges["windows"] == len(years)).all()
+
+    main = signals.scaled_signal(result.probabilities, result.window_stats, quick)
+    main_models = result.probabilities[signals.main_models(quick)]
+    sensitivity = [signals.base_rate_centred_signal(main_models, result.window_stats), signals.linear_signal(main_models)]
+    assert main.shape == result.probabilities.shape
+    assert list(sensitivity[0].columns) == signals.main_models(quick)
+    for s in [main, *sensitivity]:
+        assert s.notna().all().all()
+        assert ((s >= 0) & (s <= 1)).all().all()
+    assert signals.signal_edges(result.window_stats, quick).index.equals(result.window_stats.index)
