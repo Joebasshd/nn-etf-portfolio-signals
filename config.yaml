@@ -60,11 +60,12 @@ models:
   calibration: analysis_only    # Brier score and calibration table; raw probabilities drive the signal
   # Supervisor, Oct 2026: LASSO and LightGBM selection fits pick features;
   # all three forecasting models are fitted on the union of the two selections.
-  forecast_inputs: union
+  input_design: identical       # DRAFT; identical = every model forecasts from the union
   lasso:
-    C_grid: [0.002, 0.005, 0.01, 0.05, 0.1]   # selection fit and forecasting fit (re-tuned on the union)
+    C_grid: [0.002, 0.005, 0.01, 0.05, 0.1]   # L1 selection fit only
     selection_metric: log_loss  # on validation
     forecast_penalty: l2        # supervisor, Oct 2026: ridge on the union keeps every union feature
+    ridge_C_grid: [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0]   # DRAFT; widened both ways: 0.002 was the lower edge in 12 of 19 windows, 0.1 the upper edge in 3
   lightgbm:
     top_n_features: 15          # selection fit only; forecasting fit uses the union
     importance: gain
@@ -126,7 +127,12 @@ stats:
   # DRAFT (design-decisions.md, "decisions before Step 3")
   significance_level: 0.05
   alternative: one_sided
-  deflated_sharpe_trials: 9     # 3 models x 3 signal versions
+  deflated_sharpe_trials: 12    # DRAFT; 3 models x 3 signals + L1-refit and other checks
+  placebo:                      # DRAFT; exposure-matched placebo (supervisor request, Oct 2026)
+    method: circular_shift      # shift each ETF's weekly signal series by a random number of weeks
+    n_draws: 1000
+    quick_draws: 100            # in quick mode
+    min_shift_weeks: 52         # shift uniform in [52, W - 52], W = number of decision weeks
 
 subperiods:                     # DRAFT
   break_2018: "2018-09-24"      # GICS reclassification / XLC launch

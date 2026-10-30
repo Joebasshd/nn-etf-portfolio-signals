@@ -20,4 +20,8 @@ __pycache__/
 
 #Claude File
 CLAUDE.md
-.claude/
+.claude/*
+!.claude/skills/
+
+# Large run outputs (predictions, equity curves); small CSVs stay tracked
+results/*/large/
