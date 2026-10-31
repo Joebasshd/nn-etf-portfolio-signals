@@ -23,6 +23,12 @@ Keep this file at `docs/bridge-plan.md`. Each step has a prompt to paste into Cl
 | 2 | Repository fixes: Colab clone URL, `pandas-datareader`, LSTM 1 layer and 32 units | PR #4 |
 | 2b | Methodology settled with Prof Blanco and the team; no draft settings left | `docs/design-decisions.md` (30 Oct 2026), PR #5 |
 | 2c | Prototype reference run: identical inputs, final ridge grid, 10 LSTM seeds and seed average, seeding fix, placebo in two variants, Holm-corrected H4, deflated Sharpe ratio (25 trials), sub-periods | PR #6, tag `prototype-reference` |
+| 3 | `models.py`; features and splits aligned with the prototype | `tofag_main`, 99bfaa2 |
+| 4 | `signals.py` | c078af4 |
+| 5 | `portfolio.py` | a9b6380 |
+| 6 | `evaluate.py`, `stats.py`; Ledoit–Wolf, Diebold–Mariano and calibration added | 5a48a0d |
+| 7 | Full pipeline notebook; synthetic run covers the whole pipeline | 4c11a4d |
+| 8 | Full run reproduces the reference within tolerance; findings cell | 9b9f218, a1e71d8; `results/2026-10-31_4c11a4d_src-full/` |
 
 What the `src/` port must carry over from the prototype, beyond the original proposal:
 

@@ -51,7 +51,7 @@ label:
 splits:
   first_test_year: 2008
   last_test_year: 2026
-  validation_months: 12   # last 12 months of each training window
+  validation_months: 12   # the 12 months ending one gap before the test year
   embargo_days: 5         # gap between blocks = execution lag + horizon + embargo = 11 days
 
 models:
@@ -173,7 +173,7 @@ subperiods:                     # dates fixed before sub-period results were com
     rate_shock_2022: ["2022-01-01", "2022-10-31"]
 
 run:
-  quick_mode: false       # true: synthetic prices, short sample, small grids
+  quick_mode: false       # true: synthetic prices, short sample, the run.quick overrides
   quick:                  # overrides used only when quick_mode is true; the synthetic run takes about a minute
     lstm_seeds: 2         # first two of models.lstm.seeds
     lstm_max_epochs: 2

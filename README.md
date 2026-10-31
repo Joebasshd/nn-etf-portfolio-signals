@@ -8,7 +8,7 @@ MScFE 690 Capstone (Research Track). Team: see [CONTRIBUTORS.md](CONTRIBUTORS.md
 
 ## What this does
 
-Three classifiers (LASSO, LightGBM, LSTM) predict whether each of 11 US equity ETFs will rise over the next five trading days. Each probability `p` becomes a signal `s = min(1, max(0, (p − b) / (p90 − b)))`, where `b` is the training-window base rate and `p90` is the 90th percentile of validation forecasts. Signals are scaled by volatility into a long/flat portfolio with a 10% volatility target and compared with five benchmarks after trading costs. All models are refitted once a year on an expanding walk-forward, with test years 2008 to 2026.
+Three classifiers (a linear model, LightGBM and an LSTM) predict whether each of 11 US equity ETFs will rise over the next five trading days. Each probability `p` becomes a signal `s = min(1, max(0, (p − b) / (p90 − b)))`, where `b` is the training-window base rate and `p90` is the 90th percentile of validation forecasts. Signals are scaled by volatility into a long/flat portfolio with a 10% volatility target and compared with five benchmarks after trading costs. All models are refitted once a year on an expanding walk-forward, with test years 2008 to 2026. In every window LASSO and LightGBM select features, and the ridge (L2) logistic regression, LightGBM and the LSTM forecast from the union of the two selections.
 
 ## Install
 
@@ -37,18 +37,22 @@ On Colab, open the notebook with the badge above; its first cell clones the repo
 | `src/data.py` | Yahoo and FRED download, cache, synthetic prices | Done |
 | `src/features.py` | 31 indicators and the execution-aligned 5-day label | Done |
 | `src/splits.py` | Expanding walk-forward with an 11-day gap between blocks | Done |
-| `src/models.py` | In-window selection by LASSO and LightGBM (top 15); all three models (LASSO, LightGBM, LSTM with 20-day sequences) forecast from the union | Interface only |
-| `src/signals.py` | Main signal with floor rule; two sensitivity versions | Interface only |
-| `src/portfolio.py` | Vol-scaled weights, benchmarks, cost-aware backtest | Interface only |
-| `src/evaluate.py` | Prediction and portfolio metrics, indicator stability | Interface only |
-| `src/stats.py` | Block bootstrap, Ledoit–Wolf, deflated Sharpe | Interface only |
-| `tests/` | Leakage tests, label alignment, synthetic-data run | Covers the done modules |
+| `src/models.py` | In-window selection by LASSO and LightGBM (top 15); ridge, LightGBM and the LSTM (20-day sequences, 10 seeds plus the seed average) forecast from the union | Done |
+| `src/signals.py` | Main signal with floor rule; two sensitivity versions | Done |
+| `src/portfolio.py` | Vol-scaled weights, benchmarks, cost-aware backtest | Done |
+| `src/evaluate.py` | Prediction and portfolio metrics, calibration, cost sensitivity, indicator stability, sub-periods, run folders | Done |
+| `src/stats.py` | Block bootstrap with Holm, Ledoit–Wolf, exposure-matched placebo, deflated Sharpe, Diebold–Mariano | Done |
+| `tests/` | Leakage tests, label alignment, every module, and the whole pipeline on synthetic prices | Covers every module |
 | `notebooks/` | `00_initial_exploration` (proposal stage), `01_full_pipeline` (thin, imports `src/`) | |
-| `notebooks/prototype/` | `capstone_signal_to_portfolio`: proposal-stage prototype of the full pipeline, tested on synthetic data; source for porting into `src/` | Reference |
+| `notebooks/prototype/` | `capstone_signal_to_portfolio`: the prototype that `src/` was ported from (tag `prototype-reference`) | Reference |
 | `data/` | Raw and processed data (git-ignored) | |
 | `results/` | Tables and figures from each run, in a folder named by date and commit | |
 | `reports/` | Proposal, draft and final report (PDF) | |
 | `docs/` | `design-decisions.md` (methodology, agreed with the supervisor) and `architecture.md` | |
+
+## Status
+
+Draft results. The `src/` pipeline reproduces the prototype reference run `results/2026-10-30_363ec0b_lstm-10seeds-dsr/` within the tolerances in `docs/bridge-plan.md` (Step 8): run `results/2026-10-31_4c11a4d_src-full/`, findings at the end of `notebooks/01_full_pipeline.ipynb`.
 
 ## Before every merge
 
