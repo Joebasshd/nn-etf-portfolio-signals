@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import kurtosis, norm, skew
 from scipy.stats import t as student_t
+from tqdm.auto import tqdm
 
 from src import data, evaluate, portfolio
 
@@ -148,7 +149,7 @@ def sharpe_tests(results: dict, rf: pd.Series, names: dict, cfg: dict) -> pd.Dat
     pairs = [(n, other) for n in lstm for other in (linear, gbm)] + [(n, always_on) for n in names.values()]
 
     rows = {}
-    for a, b in pairs:
+    for a, b in tqdm(pairs, desc="Sharpe tests", unit="pair", disable=not cfg["run"]["progress"]):
         ex_a, ex_b = excess_returns(results[a], rf), excess_returns(results[b], rf)
         rows[f"{a} vs {b}"] = {**bootstrap_sharpe_difference(ex_a, ex_b, cfg), **ledoit_wolf_test(ex_a, ex_b, cfg)}
     table = pd.DataFrame(rows).T
@@ -186,7 +187,7 @@ def shift_signals(signals: pd.DataFrame, variant: str, rng, min_shift: int) -> p
 
 
 def placebo_test(signals: pd.DataFrame, base: pd.DataFrame, market: portfolio.Market, cfg: dict,
-                 common: pd.DatetimeIndex, actual: pd.Series, variant: str, n_draws: int, rng):
+                 common: pd.DatetimeIndex, actual: pd.Series, variant: str, n_draws: int, rng, bar=None):
     """Placebo distribution for one model and variant; every draw goes through portfolio.backtest.
 
     Returns the summary row and the Sharpe ratio of every draw.
@@ -200,6 +201,8 @@ def placebo_test(signals: pd.DataFrame, base: pd.DataFrame, market: portfolio.Ma
         sharpes.append(stats["Sharpe"])
         drawdowns.append(stats["Max drawdown"])
         exposures.append(stats["Avg exposure"])
+        if bar is not None:
+            bar.update()
     sharpes = np.array(sharpes)
     valid = sharpes[~np.isnan(sharpes)]
     have = len(valid) > 0
@@ -229,11 +232,15 @@ def run_placebo(main_signals: pd.DataFrame, base: pd.DataFrame, market: portfoli
     n_draws = placebo["quick_draws"] if cfg["run"]["quick_mode"] else placebo["n_draws"]
     rng = np.random.default_rng(cfg["seed"])
     rows, draws = {}, {}
+    bar = tqdm(total=len(placebo["variants"]) * len(names) * n_draws, desc="Placebo draws", unit="draw",
+               disable=not cfg["run"]["progress"])
     for variant in placebo["variants"]:
         for column, name in names.items():
+            bar.set_postfix_str(f"{name} | {variant}")
             signals = weekly_signal_matrix(main_signals[column], market)
             rows[(name, variant)], draws[f"{name} | {variant}"] = placebo_test(
-                signals, base, market, cfg, common, performance.loc[name], variant, n_draws, rng)
+                signals, base, market, cfg, common, performance.loc[name], variant, n_draws, rng, bar)
+    bar.close()
     return pd.DataFrame(rows).T.rename_axis(["model", "variant"]), pd.DataFrame(draws)
 
 

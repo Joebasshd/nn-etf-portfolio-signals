@@ -180,3 +180,4 @@ run:
     lstm_max_epochs: 2
     lightgbm_n_estimators: 200
   results_dir: results
+  progress: true          # progress bars for the walk-forward, placebo, Sharpe tests and cost sensitivity

@@ -10,6 +10,7 @@ scipy
 scikit-learn<1.10
 lightgbm
 matplotlib
+tqdm
 seaborn
 pytest
 # LSTM: tensorflow is preinstalled on Colab; install it locally only if you train the LSTM there
