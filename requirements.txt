@@ -6,7 +6,8 @@ requests
 yfinance
 pandas-datareader
 scipy
-scikit-learn
+# models.py passes penalty= to LogisticRegression, which scikit-learn 1.10 removes
+scikit-learn<1.10
 lightgbm
 matplotlib
 seaborn

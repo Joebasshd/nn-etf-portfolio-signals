@@ -89,7 +89,7 @@ def target_weights(signals: pd.Series, base: pd.DataFrame) -> pd.DataFrame:
 
 
 def backtest(targets: pd.DataFrame, market: Market, cfg: dict, cost_bps=None, band=None) -> pd.DataFrame:
-    """Daily net return, turnover and exposure for one strategy.
+    """Daily net return, turnover, exposure and cost (share of capital) for one strategy.
 
     Each target is executed at the close execution_lag_days after its decision date. Between
     trades the weights drift with prices and the cash share earns the T-bill rate. An ETF trades
@@ -109,7 +109,7 @@ def backtest(targets: pd.DataFrame, market: Market, cfg: dict, cost_bps=None, ba
 
     w = target_by_date[exec_dates[0]].copy()
     initial_turnover = np.abs(w).sum()
-    out_ret, out_turnover, out_exposure = [], [], []
+    out_ret, out_turnover, out_exposure, out_cost = [], [], [], []
     for i, d in enumerate(days):
         r = returns[i]
         port = w @ r + (1 - w.sum()) * rf[i]
@@ -123,10 +123,13 @@ def backtest(targets: pd.DataFrame, market: Market, cfg: dict, cost_bps=None, ba
             turnover = np.abs(new - w).sum()
             w = new
         out_ret.append(port - turnover * cost_bps / 1e4)
+        out_cost.append(turnover * cost_bps / 1e4)
         out_turnover.append(turnover)
         out_exposure.append(w.sum())
-    result = pd.DataFrame({"ret": out_ret, "turnover": out_turnover, "exposure": out_exposure}, index=days)
+    result = pd.DataFrame({"ret": out_ret, "turnover": out_turnover, "exposure": out_exposure, "cost": out_cost},
+                          index=days)
     result.iloc[0, result.columns.get_loc("ret")] -= initial_turnover * cost_bps / 1e4
+    result.iloc[0, result.columns.get_loc("cost")] += initial_turnover * cost_bps / 1e4
     return result
 
 
@@ -147,7 +150,8 @@ def benchmark_targets(market: Market, base: pd.DataFrame, cfg: dict) -> dict:
     vol_spy = zeros.copy()
     vol_spy[spy] = (pc["vol_target"] / market.realised_vol.loc[market.decision_dates, spy]).clip(upper=pc["max_leverage"])
     close = market.close[market.tradable]
-    trend_on = (close.rolling(50).mean() > close.rolling(200).mean()).astype(float)
+    windows = pc["sma_rule"]
+    trend_on = (close.rolling(windows["fast"]).mean() > close.rolling(windows["slow"]).mean()).astype(float)
     sma = (trend_on.loc[market.decision_dates] / n).reindex(columns=market.assets).fillna(0.0)
 
     available = {

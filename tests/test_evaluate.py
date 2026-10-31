@@ -9,16 +9,18 @@ import pytest
 from src import evaluate
 
 
-def series_result(returns, turnover=None, exposure=None) -> pd.DataFrame:
+def series_result(returns, turnover=None, exposure=None, cost=None) -> pd.DataFrame:
     index = pd.bdate_range("2020-01-01", periods=len(returns))
     n = len(returns)
     return pd.DataFrame({"ret": returns, "turnover": turnover if turnover is not None else [0.0] * n,
-                         "exposure": exposure if exposure is not None else [1.0] * n}, index=index)
+                         "exposure": exposure if exposure is not None else [1.0] * n,
+                         "cost": cost if cost is not None else [0.0] * n}, index=index)
 
 
 def test_portfolio_metrics_match_hand_calculation():
     r = [0.01, -0.02, 0.03, 0.0]
-    result = series_result(r, turnover=[0.5, 0.0, 0.25, 0.0], exposure=[1.0, 0.5, 0.5, 0.0])
+    result = series_result(r, turnover=[0.5, 0.0, 0.25, 0.0], exposure=[1.0, 0.5, 0.5, 0.0],
+                           cost=[0.0005, 0.0, 0.00025, 0.0])
     rf = pd.Series(0.0, index=result.index)
     m = evaluate.portfolio_metrics(result, rf)
     assert m["Ann. return"] == pytest.approx((1.01 * 0.98 * 1.03) ** (252 / 4) - 1)
@@ -27,6 +29,7 @@ def test_portfolio_metrics_match_hand_calculation():
     assert m["Max drawdown"] == pytest.approx(-0.02)
     assert m["Turnover / yr"] == pytest.approx(0.75 / (4 / 252))
     assert m["Avg exposure"] == pytest.approx(0.5)
+    assert m["Total cost"] == pytest.approx(0.00075)
 
 
 def test_no_position_has_no_sharpe():

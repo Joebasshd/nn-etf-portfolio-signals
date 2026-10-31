@@ -107,7 +107,10 @@ def calibration_table(probabilities: pd.DataFrame, labels: pd.Series, names: dic
 
 
 def portfolio_metrics(result: pd.DataFrame, rf: pd.Series) -> pd.Series:
-    """Annual return and volatility, Sharpe, Sortino, max drawdown, turnover and exposure of one backtest."""
+    """Annual return and volatility, Sharpe, Sortino, max drawdown, turnover, exposure and total cost of one backtest.
+
+    Total cost is the sum of the costs paid over the period, as a share of capital.
+    """
     r = result["ret"]
     excess = r - rf.loc[r.index]
     years = len(r) / TRADING_DAYS
@@ -121,6 +124,7 @@ def portfolio_metrics(result: pd.DataFrame, rf: pd.Series) -> pd.Series:
         "Max drawdown": (equity / equity.cummax() - 1).min(),
         "Turnover / yr": result["turnover"].sum() / years,
         "Avg exposure": result["exposure"].mean(),
+        "Total cost": result["cost"].sum(),
     })
 
 
