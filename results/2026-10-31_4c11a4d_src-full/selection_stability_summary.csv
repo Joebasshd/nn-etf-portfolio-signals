@@ -1,0 +1,4 @@
+model,avg. indicators selected,avg. overlap (Jaccard),most selected family,most selected indicator
+LASSO,11.526315789473685,0.3399931581828134,volatility,vol_realized_63d (95% of windows)
+LightGBM,15.0,0.6041313394506961,momentum,mom_ret_63d (100% of windows)
+Union,20.0,0.5978483361825403,momentum,mom_ret_63d (100% of windows)

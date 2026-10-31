@@ -49,15 +49,19 @@ def test_gap_is_11_trading_days(cfg, synthetic, folds):
     calendar = prices.index
     assert splits.gap_days(cfg) == 11
     for s in folds:
-        full_validation = calendar[calendar.year == s.test_year - 1]
-        assert calendar.get_loc(full_validation[0]) - calendar.get_loc(s.train.max()) == 11 + 1
+        assert calendar.get_loc(s.validation.min()) - calendar.get_loc(s.train.max()) == 11 + 1
         assert calendar.get_loc(s.test.min()) - calendar.get_loc(s.validation.max()) == 11 + 1
 
 
-def test_validation_is_last_12_months_before_test(folds):
+def test_validation_is_last_12_months_before_test(synthetic, folds):
+    prices, _ = synthetic
+    calendar = prices.index
     for s in folds:
-        assert (s.validation.year == s.test_year - 1).all()
-        assert s.validation.min().month == 1
+        assert s.validation.max() == calendar[calendar.get_loc(s.test.min()) - 11 - 1]
+        assert s.validation.min() > s.validation.max() - pd.DateOffset(months=12)
+        day_before = calendar[calendar.get_loc(s.validation.min()) - 1]
+        assert day_before <= s.validation.max() - pd.DateOffset(months=12)
+        assert s.validation.equals(calendar[(calendar >= s.validation.min()) & (calendar <= s.validation.max())])
 
 
 def test_test_years_are_complete(synthetic, folds):

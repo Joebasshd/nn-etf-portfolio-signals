@@ -19,7 +19,7 @@ Project: "Neural Network-Driven Signal Generation for Systematic Portfolio Const
 - **Data:** daily, Jan 2000 to Jun 2026; Yahoo Finance adjusted prices; FRED DTB3, VIXCLS, T10Y3M lagged one trading day. IWM usable from May 2001 (252-day indicators). For reproducible runs, use the cached `data/raw/*.parquet` written by `src/data.py`.
 - **Features:** 31 in five families (trend, momentum, volatility, volume, market context), expressed as ratios, returns or bounded oscillators.
 - **Label:** 1 if the return from close t+1 (execution) to close t+6 is positive.
-- **Validation:** expanding walk-forward, annual refit, test 2008 to 2026; last 12 months of each training window = validation; 11-trading-day gap (1 execution lag + 5 horizon + 5 embargo) between train, validation and test. Final fits use the training block only; validation is for tuning, early stopping and p90.
+- **Validation:** expanding walk-forward, annual refit, test 2008 to 2026; validation = the 12 months ending 11 trading days before the test year; 11-trading-day gap (1 execution lag + 5 horizon + 5 embargo) between train, validation and test. Final fits use the training block only; validation is for tuning, early stopping and p90.
 - **Model inputs: two stages in every window (supervisor feedback point 3, identical inputs).**
   1. Selection only, on all 31 features: LASSO (L1 logistic, C by validation log loss) keeps its non-zero coefficients; LightGBM (fixed settings, early stopping) keeps its top 15 by gain.
   2. Forecasting, every model on the same union of the two selections: linear model = ridge (L2) logistic regression, C re-tuned by validation log loss, keeps every union feature; LightGBM with the same fixed settings and early stopping, no further selection; LSTM (1 layer, 32 units, dropout 0.2, 20-day sequences, early stopping). The L1-refit version is a robustness check only.
@@ -35,7 +35,7 @@ Project: "Neural Network-Driven Signal Generation for Systematic Portfolio Const
 - **Tests:**
   - Stationary block bootstrap on Sharpe differences (10,000 resamples, mean block 20 days, one-sided, 5%).
   - Exposure-matched placebo (supervisor request, Oct 2026; see below).
-  - Deflated Sharpe ratio with 18 trials (rule in `docs/design-decisions.md`); Ledoit-Wolf and Diebold-Mariano as complements. Significance 5%, one-sided.
+  - Deflated Sharpe ratio with 25 trials (rule in `docs/design-decisions.md`; the 15 historical trials are read from the frozen `results/2026-10-30_363ec0b_lstm-10seeds-dsr/dsr_trials.csv`); Ledoit-Wolf and Diebold-Mariano as complements. Significance 5%, one-sided.
 - **Stability reporting:** selection frequency per indicator, average Jaccard overlap between consecutive windows, share of selections by family.
 
 ## Exposure-matched placebo test
@@ -71,10 +71,10 @@ Check every change against these. A violation is a bug even if results improve.
 - Every design choice lives in one configuration block or `config.yaml`, never hard-coded inside functions.
 - Python with pandas, NumPy, scikit-learn, LightGBM, TensorFlow/Keras, matplotlib. Keep `requirements.txt` current.
 - Fixed random seed from `config.yaml`.
-- Results go to `results/<date>_<git commit>_<label>/` at the repo root (label e.g. `prototype-identical`, `ridge-widegrid`), with small CSVs at the top level, figures in `figures/`, large files (predictions, equity curves) in `large/` (git-ignored), and a `run_info.json` recording commit, settings, data source and dates. Never write to a bare `results/` folder; commit after code changes and before a run so the folder name points at the code that produced it.
+- Results go to `results/<date>_<git commit>_<label>/` at the repo root (label e.g. `prototype-identical`, `ridge-widegrid`), with small CSVs at the top level, figures in `figures/`, large files (predictions, equity curves) in `large/` (git-ignored), and a `run_info.json` recording commit, settings, data source and dates. Never write to a bare `results/` folder. Runs are made from committed code so the folder name points at the code that produced it; ask before committing.
 - The prototype notebook `notebooks/prototype/capstone_signal_to_portfolio.ipynb` is evidence: add switches rather than deleting the original design. `notebooks/01_full_pipeline.ipynb` stays thin and calls `src/`.
 - Code must run in Google Colab on a CPU runtime; keep a QUICK_MODE for fast checks.
-- Short comments that say why, not what. Docstrings on public functions.
+- Comments only for a non-obvious "why" (edge-case workarounds, mathematical invariants, library quirks), never the "what" or "how"; no section-header comments, TODO markers, author tags or commented-out code. Prefer expressive names. Concise docstrings on public functions only.
 - Follow the course source code guidelines: private repo, README, requirements.txt, CONTRIBUTORS file, clear commit messages, instructor read-only access.
 
 ## How to verify before handing back
