@@ -174,6 +174,8 @@ def shift_signals(signals: pd.DataFrame, variant: str, rng, min_shift: int) -> p
     so its exposure, position sizes and holding lengths are unchanged; only the timing is broken.
     """
     W = len(signals)
+    if W - min_shift < min_shift:
+        raise ValueError(f"{W} decision weeks is too short for shifts in [{min_shift}, W - {min_shift}]")
     if variant == "common":
         k = rng.integers(min_shift, W - min_shift + 1)
         return pd.DataFrame(np.roll(signals.to_numpy(), k, axis=0), index=signals.index, columns=signals.columns)

@@ -113,3 +113,12 @@ def test_results_dir_and_run_info(cfg, tmp_path):
     assert info["label"] == "unit-test" and info["data_source"] == "synthetic"
     assert {"commit", "runtime_minutes", "cpu_minutes", "config"} <= set(info)
 
+
+
+def test_save_tables(tmp_path):
+    (tmp_path / "large").mkdir()
+    evaluate.save_tables(tmp_path, {"small": pd.DataFrame({"a": [1, 2]}), "indexed": pd.DataFrame({"a": [1]}, index=["x"])},
+                         large={"big": pd.DataFrame({"b": [3]})})
+    assert pd.read_csv(tmp_path / "small.csv").columns.tolist() == ["a"]
+    assert pd.read_csv(tmp_path / "indexed.csv", index_col=0).index.tolist() == ["x"]
+    assert (tmp_path / "large" / "big.csv").exists()

@@ -182,3 +182,9 @@ def test_run_placebo_table(cfg, market, base):
     assert list(table.index) == [(n, v) for v in quick["stats"]["placebo"]["variants"] for n in names.values()]
     assert draws.shape == (5, 4)
     assert (table["Draws"] == 5).all()
+
+
+def test_too_few_weeks_for_the_placebo_shift_raises():
+    signals = pd.DataFrame({"A": np.arange(100.0)})
+    with pytest.raises(ValueError, match="too short"):
+        stats.shift_signals(signals, "independent", np.random.default_rng(0), 52)

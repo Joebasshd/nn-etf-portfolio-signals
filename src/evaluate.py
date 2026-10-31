@@ -301,6 +301,13 @@ def results_dir(cfg: dict, label: str) -> Path:
     return out
 
 
+def save_tables(out: Path, tables: dict, large: dict = None) -> None:
+    """Small tables as <name>.csv in the run folder; large ones (predictions, curves, draws) in large/."""
+    for folder, group in ((out, tables), (out / "large", large or {})):
+        for name, table in group.items():
+            table.to_csv(folder / f"{name}.csv", index=not isinstance(table.index, pd.RangeIndex))
+
+
 def start_clock() -> dict:
     # monotonic() stops while the machine sleeps, so run times are not inflated by sleep.
     return {"wall": time.monotonic(), "cpu": time.process_time()}
