@@ -64,6 +64,8 @@ def test_costs_are_turnover_times_bps(cfg, market, base):
     gross = portfolio.backtest(base, market, cfg, cost_bps=0)
     net = portfolio.backtest(base, market, cfg, cost_bps=5)
     pd.testing.assert_series_equal(gross["turnover"], net["turnover"])
+    assert (gross["cost"] == 0).all()
+    np.testing.assert_allclose(net["cost"], gross["ret"] - net["ret"], atol=1e-15)
     cost = gross["ret"] - net["ret"]
     expected = gross["turnover"] * 5 / 1e4
     expected.iloc[0] += base.iloc[0].abs().sum() * 5 / 1e4
@@ -109,3 +111,10 @@ def test_benchmarks_and_common_period(cfg, market, base):
     assert ((weights["vol_target_spy"][0] >= 0) & (weights["vol_target_spy"][0] <= 1)).all().all()
     sma = weights["sma_50_200"][0][market.tradable]
     assert set(np.unique(sma.to_numpy().round(12))) <= {0.0, round(1 / len(market.tradable), 12)}
+
+
+def test_sma_rule_windows_come_from_config(cfg, market, base):
+    slower = {**cfg, "portfolio": {**cfg["portfolio"], "sma_rule": {"fast": 20, "slow": 100}}}
+    default = portfolio.benchmark_targets(market, base, cfg)["sma_50_200"][0]
+    changed = portfolio.benchmark_targets(market, base, slower)["sma_50_200"][0]
+    assert not default.equals(changed)

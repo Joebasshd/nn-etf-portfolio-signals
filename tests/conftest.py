@@ -15,6 +15,7 @@ def cfg():
     cfg["features"]["sample_start"] = "2001-01-01"
     cfg["splits"]["first_test_year"] = 2003
     cfg["splits"]["last_test_year"] = 2005
+    cfg["run"]["progress"] = False
     return cfg
 
 

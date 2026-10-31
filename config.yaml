@@ -124,6 +124,7 @@ portfolio:
     - vol_target_spy
     - sma_50_200
     - always_on
+  sma_rule: {fast: 50, slow: 200}     # sma_50_200: 1/11 per ETF while its fast average is above its slow one
 
 stats:
   bootstrap: {method: stationary, n_resamples: 10000, block_days: 20}
@@ -179,3 +180,4 @@ run:
     lstm_max_epochs: 2
     lightgbm_n_estimators: 200
   results_dir: results
+  progress: true          # progress bars for the walk-forward, placebo, Sharpe tests and cost sensitivity

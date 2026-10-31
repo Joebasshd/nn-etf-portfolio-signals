@@ -4,9 +4,11 @@ The linear forecasting model keeps the code key "lasso" but is a ridge (L2)
 logistic regression on the union; report it as "Linear (L1 selection, ridge on union)".
 """
 
+import contextlib
 import copy
 import os
 import random
+import warnings
 from dataclasses import dataclass, field
 
 import lightgbm as lgb
@@ -15,12 +17,25 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 from sklearn.preprocessing import StandardScaler
+from tqdm.auto import tqdm
 
 from src import features, splits
 
 MODEL_NAMES = ["lasso", "lightgbm", "lstm"]
 SELECTORS = ["lasso", "lightgbm", "union"]
 PREDICT_BATCH_SIZE = 2048
+
+
+@contextlib.contextmanager
+def quiet_deprecations():
+    """Silence the scikit-learn penalty= and LightGBM eval_set deprecation warnings.
+
+    The calls are kept as they are for parity with the reference run.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        warnings.filterwarnings("ignore", message="Inconsistent values: penalty", category=UserWarning)
+        yield
 
 
 @dataclass
@@ -53,6 +68,7 @@ def lstm_columns(settings: dict) -> list:
     return [f"lstm_{s}" for s in seeds] + average
 
 
+@quiet_deprecations()
 def fit_lasso_selection(X_train, y_train, X_val, y_val, feature_names: list, settings: dict) -> dict:
     """L1 logistic regression with C chosen by validation log loss; keeps the non-zero features.
 
@@ -76,6 +92,7 @@ def fit_lasso_selection(X_train, y_train, X_val, y_val, feature_names: list, set
     return best
 
 
+@quiet_deprecations()
 def fit_lightgbm(X_train, y_train, X_val, y_val, settings: dict) -> lgb.LGBMClassifier:
     """LightGBM with the fixed settings and early stopping on validation log loss."""
     gbm = settings["lightgbm"]
@@ -105,6 +122,7 @@ def select_features(X_train, y_train, X_val, y_val, feature_names: list, setting
     }
 
 
+@quiet_deprecations()
 def fit_ridge(X_train, y_train, X_val, y_val, settings: dict) -> dict:
     """Ridge (L2) logistic regression with C chosen by validation log loss; keeps every input feature."""
     best = None
@@ -195,7 +213,8 @@ def fit_predict_lstm(scaled: pd.DataFrame, labels: pd.Series, split: splits.Spli
     return p_val, p_test
 
 
-def _fit_window(data: pd.DataFrame, feature_names: list, split: splits.Split, settings: dict, p90_quantile: float):
+def _fit_window(data: pd.DataFrame, feature_names: list, split: splits.Split, settings: dict, p90_quantile: float,
+                bar=None):
     dates = data.index.get_level_values("date")
     labelled = data["label"].notna()
     train = data[dates.isin(split.train) & labelled]
@@ -221,16 +240,22 @@ def _fit_window(data: pd.DataFrame, feature_names: list, split: splits.Split, se
         "lightgbm": gbm.predict_proba(X_val[:, cols])[:, 1],
     }
     inputs = {"lasso": union, "lightgbm": union}
+    if bar is not None:
+        bar.update()
 
     seeds = settings["lstm"]["seeds"]
     if seeds:
         # Every row is scaled with this window's scaler so look-back windows are on one scale.
         scaled = pd.DataFrame(scaler.transform(data[feature_names]), index=data.index, columns=feature_names)
         for seed in seeds:
+            if bar is not None:
+                bar.set_postfix_str(f"{split.test_year} LSTM seed {seed}")
             key = f"lstm_{seed}"
             p_val[key], p_test = fit_predict_lstm(scaled, data["label"], split, union, seed, settings)
             probabilities[key] = p_test.reindex(probabilities.index)
             inputs[key] = union
+            if bar is not None:
+                bar.update()
         if "lstm_avg" in lstm_columns(settings):
             seed_keys = [f"lstm_{s}" for s in seeds]
             # Every seed uses the same sequences, so validation forecasts line up element by element.
@@ -262,10 +287,13 @@ def run_walk_forward(data: pd.DataFrame, walk_forward: list, cfg: dict) -> WalkF
     np.random.seed(cfg["seed"])
     random.seed(cfg["seed"])
     probabilities, validation, selection_rows, stats_rows, tuning_rows, inputs, scalers = [], {}, [], [], [], {}, {}
+    bar = tqdm(total=len(walk_forward) * (1 + len(settings["lstm"]["seeds"])), desc="Walk-forward fits", unit="fit",
+               disable=not cfg["run"]["progress"])
     try:
         for split in walk_forward:
+            bar.set_postfix_str(f"{split.test_year} linear and LightGBM")
             p_test, p_val, selected, stats, tuning, window_inputs, scaler = _fit_window(
-                data, feature_names, split, settings, p90_quantile
+                data, feature_names, split, settings, p90_quantile, bar
             )
             probabilities.append(p_test)
             validation[split.test_year] = p_val
@@ -276,6 +304,7 @@ def run_walk_forward(data: pd.DataFrame, walk_forward: list, cfg: dict) -> WalkF
             inputs[split.test_year] = window_inputs
             scalers[split.test_year] = scaler
     finally:
+        bar.close()
         random.setstate(python_state)
         np.random.set_state(numpy_state)
 

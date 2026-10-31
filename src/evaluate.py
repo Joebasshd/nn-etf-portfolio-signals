@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, brier_score_loss, log_loss, roc_auc_score
+from tqdm.auto import tqdm
 
 from src import data, features, portfolio
 
@@ -107,7 +108,10 @@ def calibration_table(probabilities: pd.DataFrame, labels: pd.Series, names: dic
 
 
 def portfolio_metrics(result: pd.DataFrame, rf: pd.Series) -> pd.Series:
-    """Annual return and volatility, Sharpe, Sortino, max drawdown, turnover and exposure of one backtest."""
+    """Annual return and volatility, Sharpe, Sortino, max drawdown, turnover, exposure and total cost of one backtest.
+
+    Total cost is the sum of the costs paid over the period, as a share of capital.
+    """
     r = result["ret"]
     excess = r - rf.loc[r.index]
     years = len(r) / TRADING_DAYS
@@ -121,6 +125,7 @@ def portfolio_metrics(result: pd.DataFrame, rf: pd.Series) -> pd.Series:
         "Max drawdown": (equity / equity.cummax() - 1).min(),
         "Turnover / yr": result["turnover"].sum() / years,
         "Avg exposure": result["exposure"].mean(),
+        "Total cost": result["cost"].sum(),
     })
 
 
@@ -141,7 +146,8 @@ def breakeven_cost(gross: pd.DataFrame, rf: pd.Series) -> float:
 def cost_sensitivity(strategies: dict, market: portfolio.Market, cfg: dict, common: pd.DatetimeIndex) -> pd.DataFrame:
     """Sharpe at each cost in portfolio.cost_bps_sensitivity, and the break-even cost."""
     rows = {}
-    for name, (targets, band) in strategies.items():
+    for name, (targets, band) in tqdm(strategies.items(), desc="Cost sensitivity", unit="strategy",
+                                      disable=not cfg["run"]["progress"]):
         runs = {c: portfolio.backtest(targets, market, cfg, c, band).loc[common]
                 for c in cfg["portfolio"]["cost_bps_sensitivity"]}
         row = {f"Sharpe @ {c} bps": portfolio_metrics(r, market.rf)["Sharpe"] for c, r in runs.items()}
