@@ -119,6 +119,9 @@ def test_save_tables(tmp_path):
     (tmp_path / "large").mkdir()
     evaluate.save_tables(tmp_path, {"small": pd.DataFrame({"a": [1, 2]}), "indexed": pd.DataFrame({"a": [1]}, index=["x"])},
                          large={"big": pd.DataFrame({"b": [3]})})
+    years = pd.DataFrame({"C": [0.1, 0.2]}, index=pd.RangeIndex(2008, 2010, name="test_year"))
+    evaluate.save_tables(tmp_path, {"years": years})
+    assert pd.read_csv(tmp_path / "years.csv").columns.tolist() == ["test_year", "C"]
     assert pd.read_csv(tmp_path / "small.csv").columns.tolist() == ["a"]
     assert pd.read_csv(tmp_path / "indexed.csv", index_col=0).index.tolist() == ["x"]
     assert (tmp_path / "large" / "big.csv").exists()

@@ -305,7 +305,9 @@ def save_tables(out: Path, tables: dict, large: dict = None) -> None:
     """Small tables as <name>.csv in the run folder; large ones (predictions, curves, draws) in large/."""
     for folder, group in ((out, tables), (out / "large", large or {})):
         for name, table in group.items():
-            table.to_csv(folder / f"{name}.csv", index=not isinstance(table.index, pd.RangeIndex))
+            # Consecutive years can be stored as a RangeIndex too, so only an unnamed one is a bare row number.
+            row_numbers = isinstance(table.index, pd.RangeIndex) and table.index.name is None
+            table.to_csv(folder / f"{name}.csv", index=not row_numbers)
 
 
 def start_clock() -> dict:

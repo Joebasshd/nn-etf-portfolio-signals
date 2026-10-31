@@ -1,0 +1,369 @@
+{
+  "commit": "4c11a4d",
+  "run_date": "2026-10-31 06:27",
+  "label": "src-full",
+  "data_source": "cache",
+  "quick_mode": false,
+  "data_dates": [
+    "2000-01-03",
+    "2026-06-29"
+  ],
+  "backtest_dates": [
+    "2008-02-04",
+    "2026-06-29"
+  ],
+  "test_windows": [
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "lstm_seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51
+  ],
+  "deflated_sharpe": {
+    "trials_used": 25,
+    "sr0_annualised": 0.3340840591018445
+  },
+  "placebo_draws_used": 1000,
+  "config": {
+    "seed": 42,
+    "universe": {
+      "benchmark": "SPY",
+      "tradable": [
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLU",
+        "XLV",
+        "XLY",
+        "QQQ",
+        "IWM"
+      ]
+    },
+    "data": {
+      "start": "2000-01-01",
+      "end": "2026-06-30",
+      "raw_dir": "data/raw",
+      "processed_dir": "data/processed",
+      "fred_series": {
+        "DTB3": "DTB3",
+        "VIXCLS": "VIX",
+        "T10Y3M": "TERM_SPREAD"
+      },
+      "fred_lag_days": 1
+    },
+    "features": {
+      "sample_start": "2001-01-01",
+      "sma_windows": [
+        10,
+        20,
+        50,
+        200
+      ],
+      "macd": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "adx_window": 14,
+      "return_windows": [
+        5,
+        21,
+        63,
+        126,
+        252
+      ],
+      "rsi_window": 14,
+      "stochastic": {
+        "k": 14,
+        "d": 3
+      },
+      "williams_window": 14,
+      "roc_window": 10,
+      "realized_vol_windows": [
+        21,
+        63
+      ],
+      "atr_window": 14,
+      "bollinger": {
+        "window": 20,
+        "n_std": 2
+      },
+      "obv_change_window": 20,
+      "volume_z_window": 20,
+      "cmf_window": 20,
+      "mfi_window": 14,
+      "vix_change_window": 5,
+      "benchmark_return_window": 21
+    },
+    "label": {
+      "horizon_days": 5,
+      "execution_lag_days": 1,
+      "decision_frequency": "weekly"
+    },
+    "splits": {
+      "first_test_year": 2008,
+      "last_test_year": 2026,
+      "validation_months": 12,
+      "embargo_days": 5
+    },
+    "models": {
+      "refit_on": "train",
+      "calibration": "analysis_only",
+      "input_design": "identical",
+      "lasso": {
+        "C_grid": [
+          0.002,
+          0.005,
+          0.01,
+          0.05,
+          0.1
+        ],
+        "selection_metric": "log_loss",
+        "forecast_penalty": "l2",
+        "ridge_C_grid": [
+          1e-05,
+          3e-05,
+          0.0001,
+          0.0003,
+          0.001,
+          0.003,
+          0.01,
+          0.03,
+          0.1,
+          0.3,
+          1.0,
+          3.0,
+          10.0
+        ]
+      },
+      "lightgbm": {
+        "top_n_features": 15,
+        "importance": "gain",
+        "params": {
+          "n_estimators": 2000,
+          "learning_rate": 0.02,
+          "num_leaves": 15,
+          "min_child_samples": 200,
+          "subsample": 0.8,
+          "subsample_freq": 1,
+          "colsample_bytree": 0.8,
+          "reg_lambda": 1.0
+        },
+        "early_stopping_rounds": 100
+      },
+      "lstm": {
+        "sequence_length": 20,
+        "layers": 1,
+        "units": 32,
+        "dropout": 0.2,
+        "recurrent_dropout": 0.0,
+        "learning_rate": 0.001,
+        "batch_size": 512,
+        "max_epochs": 25,
+        "early_stopping_patience": 3,
+        "seeds": [
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51
+        ],
+        "seed_average": true
+      }
+    },
+    "signals": {
+      "main": "scaled",
+      "p90_quantile": 0.9,
+      "floor": 0.01,
+      "sensitivity": [
+        "base_rate_centred",
+        "linear"
+      ]
+    },
+    "portfolio": {
+      "vol_target": 0.1,
+      "vol_lookback_days": 63,
+      "max_weight": 0.25,
+      "max_leverage": 1.0,
+      "long_only": true,
+      "no_trade_band": 0.02,
+      "no_trade_band_applies_to": "per_etf",
+      "cost_bps_per_side": 5,
+      "benchmarks_pay_costs": true,
+      "cost_bps_sensitivity": [
+        0,
+        2,
+        5,
+        10
+      ],
+      "cash_rate": "DTB3",
+      "benchmarks": [
+        "spy_buy_hold",
+        "equal_weight_monthly",
+        "vol_target_spy",
+        "sma_50_200",
+        "always_on"
+      ]
+    },
+    "stats": {
+      "bootstrap": {
+        "method": "stationary",
+        "n_resamples": 10000,
+        "block_days": 20
+      },
+      "other_tests": [
+        "ledoit_wolf_2008",
+        "deflated_sharpe",
+        "diebold_mariano"
+      ],
+      "significance_level": 0.05,
+      "alternative": "one_sided",
+      "h4_correction": "holm",
+      "ledoit_wolf": {
+        "kernel": "quadratic_spectral",
+        "prewhiten": true
+      },
+      "diebold_mariano": {
+        "loss": "brier",
+        "small_sample_correction": true
+      },
+      "calibration_bins": 10,
+      "deflated_sharpe_trials": 25,
+      "dsr_reference_trials": "results/2026-10-30_363ec0b_lstm-10seeds-dsr/dsr_trials.csv",
+      "dsr_external_trials": [
+        {
+          "name": "L1 refit, main",
+          "sharpe": 0.3
+        },
+        {
+          "name": "L1 refit, base-rate",
+          "sharpe": 0.74
+        },
+        {
+          "name": "L1 refit, 2p-1",
+          "sharpe": 0.51
+        },
+        {
+          "name": "ridge grid 0.002-0.1, main",
+          "sharpe": 0.448
+        },
+        {
+          "name": "ridge grid 0.002-0.1, base-rate",
+          "sharpe": 0.742
+        },
+        {
+          "name": "ridge grid 0.002-0.1, 2p-1",
+          "sharpe": 0.531
+        },
+        {
+          "name": "ridge grid 0.0001-1, main",
+          "sharpe": 0.445
+        },
+        {
+          "name": "ridge grid 0.0001-1, base-rate",
+          "sharpe": 0.661
+        },
+        {
+          "name": "ridge grid 0.0001-1, 2p-1",
+          "sharpe": 0.541
+        },
+        {
+          "name": "original design LASSO, main",
+          "sharpe": 0.296
+        },
+        {
+          "name": "original design LASSO, base-rate",
+          "sharpe": 0.743
+        },
+        {
+          "name": "original design LASSO, 2p-1",
+          "sharpe": 0.482
+        },
+        {
+          "name": "original design LightGBM, main",
+          "sharpe": 0.153
+        },
+        {
+          "name": "original design LightGBM, base-rate",
+          "sharpe": 0.43
+        },
+        {
+          "name": "original design LightGBM, 2p-1",
+          "sharpe": 0.593
+        }
+      ],
+      "placebo": {
+        "method": "circular_shift",
+        "variants": [
+          "independent",
+          "common"
+        ],
+        "n_draws": 1000,
+        "quick_draws": 100,
+        "min_shift_weeks": 52
+      }
+    },
+    "subperiods": {
+      "break_2018": "2018-09-24",
+      "crises": {
+        "gfc": [
+          "2008-09-01",
+          "2009-06-30"
+        ],
+        "covid": [
+          "2020-02-01",
+          "2020-06-30"
+        ],
+        "rate_shock_2022": [
+          "2022-01-01",
+          "2022-10-31"
+        ]
+      }
+    },
+    "run": {
+      "quick_mode": false,
+      "quick": {
+        "lstm_seeds": 2,
+        "lstm_max_epochs": 2,
+        "lightgbm_n_estimators": 200
+      },
+      "results_dir": "results"
+    }
+  },
+  "runtime_minutes": 22.2,
+  "cpu_minutes": 30.0
+}

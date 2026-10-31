@@ -1,0 +1,26 @@
+trial,Sharpe
+"Linear (L1 selection, ridge on union)",0.17680786732566148
+"Linear (L1 selection, ridge on union), base-rate",0.6221044146084568
+"Linear (L1 selection, ridge on union), 2p-1",0.5070737051199613
+LightGBM,0.2633206402490856
+"LightGBM, base-rate",0.33048646784466584
+"LightGBM, 2p-1",0.5103782971238241
+LSTM,0.5369295962995676
+"LSTM, base-rate",0.551993682073707
+"LSTM, 2p-1",0.5891967775963111
+LSTM (average of 10 seeds),0.6743167328185132
+"L1 refit, main",0.3
+"L1 refit, base-rate",0.74
+"L1 refit, 2p-1",0.51
+"ridge grid 0.002-0.1, main",0.448
+"ridge grid 0.002-0.1, base-rate",0.742
+"ridge grid 0.002-0.1, 2p-1",0.531
+"ridge grid 0.0001-1, main",0.445
+"ridge grid 0.0001-1, base-rate",0.661
+"ridge grid 0.0001-1, 2p-1",0.541
+"original design LASSO, main",0.296
+"original design LASSO, base-rate",0.743
+"original design LASSO, 2p-1",0.482
+"original design LightGBM, main",0.153
+"original design LightGBM, base-rate",0.43
+"original design LightGBM, 2p-1",0.593
