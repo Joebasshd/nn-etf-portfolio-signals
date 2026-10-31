@@ -43,7 +43,7 @@ Two stages in every window:
 - Sensitivity checks: base-rate centred (p − b)/(1 − b); original 2p − 1. Their Sharpe ratios are inflated by near-zero exposure and are not read as evidence of skill.
 - Inverse-volatility base weights, 10% vol target (63-day), no leverage, 25% cap per ETF.
 - Weekly rebalance at the next day's close; 2-percentage-point no-trade band applied to each ETF's weight. **(team)**
-- Calibration (Brier score, reliability table) is analysis only and is not used for position sizing. **(team)**
+- Calibration (Brier score, reliability table) is analysis only and is not used for position sizing. **(team)** The table bins forecasts by deciles of p, not equal-width bins, because nearly all forecasts lie between 0.45 and 0.65. **(team)**
 
 ## Benchmarks and costs
 - SPY buy-and-hold; equal-weight (monthly); vol-targeted SPY; SMA 50/200 rule; always-on (same vol-scaled weights, all signals = 1). Always-on shows whether the trades come from the model. **(supervisor)**
@@ -60,6 +60,8 @@ Two stages in every window:
   Report the actual Sharpe; the placebo median and 5th/95th percentiles; p = (1 + number of draws with Sharpe ≥ actual) / (N + 1); and the placebo median maximum drawdown next to the actual one, so lower drawdowns from low exposure are not mistaken for skill. Run for all three models, every LSTM seed and the seed-average.
 - **Deflated Sharpe ratio:** trials = 25. **(team)** Rule: one trial for every model × signal-version combination whose test-period Sharpe ratio was computed: 9 main specifications (3 models × 3 signals); the linear model's L1 refit and its two earlier ridge grids (3 signal versions each = 9); the original input design, where LASSO and LightGBM forecast from their own selections (3 signal versions each = 6); and the seed-averaged LSTM (main signal = 1). The count was 18 until 30 October 2026, when the original input design and the seed average were added under the same rule. The benchmark SR0 is the expected maximum Sharpe ratio of 25 trials with no skill, from the variance of the 25 trials' Sharpe ratios (Bailey & López de Prado, 2014); a DSR above 0.95 is significant at 5%. Each run recomputes the 10 current trials (9 main specifications and the seed average); the 15 historical trials (L1 refit, the two earlier ridge grids, the original input design) are read from the frozen `results/2026-10-30_363ec0b_lstm-10seeds-dsr/dsr_trials.csv` of the reference run. **(team)** LSTM seeds are not counted as trials, because they are reported as a distribution, never chosen from. Placebo and sub-period runs are not counted, because they re-test the same specifications. Counting generously makes the correction stricter, not looser.
 - Ledoit–Wolf test and Diebold–Mariano test on forecast loss, as complements to the bootstrap.
+  - Ledoit–Wolf: the HAC version of Ledoit and Wolf (2008), reported next to the bootstrap for the same pairs: delta-method standard error of the Sharpe-ratio difference, long-run covariance from a prewhitened quadratic-spectral kernel with automatic bandwidth (Andrews and Monahan, 1992); one-sided. **(team)**
+  - Diebold–Mariano: Brier loss per (date, ETF), averaged across ETFs each day; every LSTM seed and the seed average against LightGBM and the linear model; Newey–West variance with horizon − 1 = 4 lags (overlapping labels) and the Harvey–Leybourne–Newbold correction; one-sided (LSTM has lower loss); no Holm correction, as a complement. **(team)**
 
 ## Sub-periods (team)
 - GFC: Sep 2008 – Jun 2009.

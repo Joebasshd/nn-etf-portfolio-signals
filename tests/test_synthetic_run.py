@@ -9,7 +9,7 @@ import copy
 import pandas as pd
 import pytest
 
-from src import features, models, portfolio, signals, splits
+from src import evaluate, features, models, portfolio, signals, splits, stats
 
 
 def test_data_to_splits_on_synthetic_prices(cfg, synthetic):
@@ -29,7 +29,7 @@ def test_data_to_splits_on_synthetic_prices(cfg, synthetic):
         assert splits.select(dataset, s.train)["label"].notna().all()
 
 
-def test_models_signals_and_portfolio_on_synthetic_prices(cfg, synthetic):
+def test_whole_pipeline_on_synthetic_prices(cfg, synthetic):
     pytest.importorskip("tensorflow")
     quick = copy.deepcopy(cfg)
     quick["run"]["quick_mode"] = True
@@ -64,13 +64,8 @@ def test_models_signals_and_portfolio_on_synthetic_prices(cfg, synthetic):
 
     market = portfolio.prepare_market(prices, macro, quick, folds[0].test[0])
     base = portfolio.base_weights(market, quick)
-    strategies = portfolio.benchmark_targets(market, base, quick)
-    band = quick["portfolio"]["no_trade_band"]
-    for model in main.columns:
-        strategies[model] = (portfolio.target_weights(main[model], base), band)
-    for name, sensitivity_signal in zip(["base_rate", "linear"], sensitivity):
-        for model in sensitivity_signal.columns:
-            strategies[f"{model}_{name}"] = (portfolio.target_weights(sensitivity_signal[model], base), band)
+    names = evaluate.display_names(result.probabilities.columns)
+    strategies = evaluate.strategy_targets(main, dict(zip(["base_rate", "linear"], sensitivity)), base, market, quick, names)
     backtests = portfolio.run_strategies(strategies, market, quick)
 
     first = next(iter(backtests.values())).index
@@ -80,3 +75,37 @@ def test_models_signals_and_portfolio_on_synthetic_prices(cfg, synthetic):
         assert r.notna().all().all()
         assert (r["exposure"] >= 0).all() and (r["exposure"] <= 1 + 1e-12).all()
     assert first[0] > folds[0].test[0] and first[-1] == prices.index[-1]
+
+    labels = dataset["label"]
+    rf = market.rf
+    performance = evaluate.performance_table(backtests, rf)
+    assert performance.index.equals(pd.Index(list(backtests)))
+    assert evaluate.prediction_metrics(result.probabilities, labels, names).shape[0] == len(names)
+    assert evaluate.auc_by_year(result.probabilities, labels, names).index.tolist() == years
+    calibration = evaluate.calibration_table(result.probabilities, labels, names, quick["stats"]["calibration_bins"])
+    assert calibration.groupby("model")["n"].sum().nunique() == 1
+    feature_names = features.feature_columns(dataset)
+    assert evaluate.stability_summary(result.selections, feature_names).shape[0] == 3
+    costs = evaluate.cost_sensitivity({n: strategies[n] for n in names.values()}, market, quick, first)
+    assert costs.shape == (len(names), len(quick["portfolio"]["cost_bps_sensitivity"]) + 1)
+    sub = evaluate.subperiod_metrics({n: backtests[n] for n in names.values()}, rf, result.probabilities, labels, names, quick)
+    assert set(sub["strategy"]) == set(names.values())
+
+    tests = stats.sharpe_tests(backtests, rf, names, quick)
+    n_lstm = sum(c.startswith("lstm_") for c in names)
+    assert len(tests) == 2 * n_lstm + len(names)
+    assert tests["p Holm (H4)"].notna().sum() == 2 * n_lstm
+    placebo, draws = stats.run_placebo(main, base, market, quick, first, performance, names)
+    assert len(placebo) == len(names) * len(quick["stats"]["placebo"]["variants"])
+    assert (placebo["Draws"] <= quick["stats"]["placebo"]["quick_draws"]).all()
+    assert len(draws) == quick["stats"]["placebo"]["quick_draws"]
+    trials = stats.dsr_trials(performance, names, signals.main_models(quick), quick)
+    dsr = stats.dsr_table(backtests, rf, list(names.values()), trials)
+    assert len(trials) == quick["stats"]["deflated_sharpe_trials"]
+    assert (dsr["Trials"] == trials.notna().sum()).all()
+    dm = stats.diebold_mariano_tests(stats.forecast_losses(result.probabilities, labels), names, quick)
+    assert len(dm) == 2 * n_lstm
+    edges = signals.signal_edges(result.window_stats, quick).reset_index().assign(model=lambda e: e["model"].map(names))
+    seeds = evaluate.lstm_seed_summary(names, evaluate.prediction_metrics(result.probabilities, labels, names),
+                                       performance, edges, dsr, placebo, tests, quick["stats"]["placebo"]["variants"])
+    assert names["lstm_avg"] in seeds.index

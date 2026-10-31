@@ -131,6 +131,9 @@ stats:
   significance_level: 0.05
   alternative: one_sided
   h4_correction: holm           # across LSTM vs linear and LSTM vs LightGBM
+  ledoit_wolf: {kernel: quadratic_spectral, prewhiten: true}   # HAC inference of Ledoit and Wolf (2008)
+  diebold_mariano: {loss: brier, small_sample_correction: true}   # lags = horizon - 1 (overlapping labels)
+  calibration_bins: 10          # deciles of the forecast probability
   # Rule in design-decisions.md: 9 main specifications + seed-averaged LSTM (computed in every
   # run) + 15 earlier specifications below; LSTM seeds, placebo and sub-period runs are not counted.
   deflated_sharpe_trials: 25
